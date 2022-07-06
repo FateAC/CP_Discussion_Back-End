@@ -44,27 +44,32 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Movie struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
+	Member struct {
+		AvatarPath func(childComplexity int) int
+		Email      func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IsAdmin    func(childComplexity int) int
+		Nickname   func(childComplexity int) int
+		Password   func(childComplexity int) int
+		Username   func(childComplexity int) int
 	}
 
 	Mutation struct {
-		CreateMovie func(childComplexity int, input model.NewMovie) int
+		CreateMember func(childComplexity int, input model.NewMember) int
 	}
 
 	Query struct {
-		Movie  func(childComplexity int, id string) int
-		Movies func(childComplexity int) int
+		Member  func(childComplexity int, id string) int
+		Members func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
-	CreateMovie(ctx context.Context, input model.NewMovie) (*model.Movie, error)
+	CreateMember(ctx context.Context, input model.NewMember) (*model.Member, error)
 }
 type QueryResolver interface {
-	Movie(ctx context.Context, id string) (*model.Movie, error)
-	Movies(ctx context.Context) ([]*model.Movie, error)
+	Member(ctx context.Context, id string) (*model.Member, error)
+	Members(ctx context.Context) ([]*model.Member, error)
 }
 
 type executableSchema struct {
@@ -82,50 +87,85 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Movie.id":
-		if e.complexity.Movie.ID == nil {
+	case "Member.avatarPath":
+		if e.complexity.Member.AvatarPath == nil {
 			break
 		}
 
-		return e.complexity.Movie.ID(childComplexity), true
+		return e.complexity.Member.AvatarPath(childComplexity), true
 
-	case "Movie.name":
-		if e.complexity.Movie.Name == nil {
+	case "Member.email":
+		if e.complexity.Member.Email == nil {
 			break
 		}
 
-		return e.complexity.Movie.Name(childComplexity), true
+		return e.complexity.Member.Email(childComplexity), true
 
-	case "Mutation.createMovie":
-		if e.complexity.Mutation.CreateMovie == nil {
+	case "Member._id":
+		if e.complexity.Member.ID == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createMovie_args(context.TODO(), rawArgs)
+		return e.complexity.Member.ID(childComplexity), true
+
+	case "Member.isAdmin":
+		if e.complexity.Member.IsAdmin == nil {
+			break
+		}
+
+		return e.complexity.Member.IsAdmin(childComplexity), true
+
+	case "Member.nickname":
+		if e.complexity.Member.Nickname == nil {
+			break
+		}
+
+		return e.complexity.Member.Nickname(childComplexity), true
+
+	case "Member.password":
+		if e.complexity.Member.Password == nil {
+			break
+		}
+
+		return e.complexity.Member.Password(childComplexity), true
+
+	case "Member.username":
+		if e.complexity.Member.Username == nil {
+			break
+		}
+
+		return e.complexity.Member.Username(childComplexity), true
+
+	case "Mutation.createMember":
+		if e.complexity.Mutation.CreateMember == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createMember_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateMovie(childComplexity, args["input"].(model.NewMovie)), true
+		return e.complexity.Mutation.CreateMember(childComplexity, args["input"].(model.NewMember)), true
 
-	case "Query.movie":
-		if e.complexity.Query.Movie == nil {
+	case "Query.member":
+		if e.complexity.Query.Member == nil {
 			break
 		}
 
-		args, err := ec.field_Query_movie_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_member_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.Movie(childComplexity, args["_id"].(string)), true
+		return e.complexity.Query.Member(childComplexity, args["_id"].(string)), true
 
-	case "Query.movies":
-		if e.complexity.Query.Movies == nil {
+	case "Query.members":
+		if e.complexity.Query.Members == nil {
 			break
 		}
 
-		return e.complexity.Query.Movies(childComplexity), true
+		return e.complexity.Query.Members(childComplexity), true
 
 	}
 	return 0, false
@@ -135,7 +175,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputNewMovie,
+		ec.unmarshalInputNewMember,
 	)
 	first := true
 
@@ -200,22 +240,32 @@ var sources = []*ast.Source{
 #
 # https://gqlgen.com/getting-started/
 
-type Movie{
-  id: ID!
-  name: String!
+type Member {
+  _id: ID!
+  email: String!
+  password: String!
+  isAdmin: Boolean!
+  username: String!
+  nickname: String!
+  avatarPath: String!
 }
 
-input NewMovie{
-  name: String!
+input NewMember {
+  email: String!
+  password: String!
+  isAdmin: Boolean!
+  username: String!
+  nickname: String!
+  avatarPath: String!
 }
 
 type Mutation{
-  createMovie (input: NewMovie!): Movie!
+  createMember (input: NewMember!): Member!
 }
 
 type Query {
-  movie(_id: String!): Movie!
-  movies: [Movie!]!
+  member(_id: String!): Member!
+  members: [Member!]!
 }
 `, BuiltIn: false},
 }
@@ -225,13 +275,13 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_createMovie_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.NewMovie
+	var arg0 model.NewMember
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewMovie2CP_DiscussionᚋgraphᚋmodelᚐNewMovie(ctx, tmp)
+		arg0, err = ec.unmarshalNNewMember2CP_DiscussionᚋgraphᚋmodelᚐNewMember(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -255,7 +305,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_movie_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_member_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -308,8 +358,8 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Movie_id(ctx context.Context, field graphql.CollectedField, obj *model.Movie) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Movie_id(ctx, field)
+func (ec *executionContext) _Member__id(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Member__id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -339,9 +389,9 @@ func (ec *executionContext) _Movie_id(ctx context.Context, field graphql.Collect
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Movie_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Member__id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Movie",
+		Object:     "Member",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -352,8 +402,8 @@ func (ec *executionContext) fieldContext_Movie_id(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Movie_name(ctx context.Context, field graphql.CollectedField, obj *model.Movie) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Movie_name(ctx, field)
+func (ec *executionContext) _Member_email(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Member_email(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -366,7 +416,7 @@ func (ec *executionContext) _Movie_name(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return obj.Email, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -383,9 +433,9 @@ func (ec *executionContext) _Movie_name(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Movie_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Member_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Movie",
+		Object:     "Member",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -396,8 +446,8 @@ func (ec *executionContext) fieldContext_Movie_name(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createMovie(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createMovie(ctx, field)
+func (ec *executionContext) _Member_password(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Member_password(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -410,7 +460,7 @@ func (ec *executionContext) _Mutation_createMovie(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateMovie(rctx, fc.Args["input"].(model.NewMovie))
+		return obj.Password, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -422,12 +472,232 @@ func (ec *executionContext) _Mutation_createMovie(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Movie)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNMovie2ᚖCP_DiscussionᚋgraphᚋmodelᚐMovie(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createMovie(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Member_password(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Member",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Member_isAdmin(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Member_isAdmin(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsAdmin, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Member_isAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Member",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Member_username(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Member_username(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Username, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Member_username(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Member",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Member_nickname(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Member_nickname(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nickname, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Member_nickname(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Member",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Member_avatarPath(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Member_avatarPath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AvatarPath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Member_avatarPath(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Member",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createMember(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateMember(rctx, fc.Args["input"].(model.NewMember))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Member)
+	fc.Result = res
+	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -435,12 +705,22 @@ func (ec *executionContext) fieldContext_Mutation_createMovie(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Movie_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Movie_name(ctx, field)
+			case "_id":
+				return ec.fieldContext_Member__id(ctx, field)
+			case "email":
+				return ec.fieldContext_Member_email(ctx, field)
+			case "password":
+				return ec.fieldContext_Member_password(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_Member_isAdmin(ctx, field)
+			case "username":
+				return ec.fieldContext_Member_username(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Member_nickname(ctx, field)
+			case "avatarPath":
+				return ec.fieldContext_Member_avatarPath(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Movie", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
 		},
 	}
 	defer func() {
@@ -450,15 +730,15 @@ func (ec *executionContext) fieldContext_Mutation_createMovie(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createMovie_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_movie(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_movie(ctx, field)
+func (ec *executionContext) _Query_member(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_member(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -471,7 +751,7 @@ func (ec *executionContext) _Query_movie(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Movie(rctx, fc.Args["_id"].(string))
+		return ec.resolvers.Query().Member(rctx, fc.Args["_id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -483,12 +763,12 @@ func (ec *executionContext) _Query_movie(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Movie)
+	res := resTmp.(*model.Member)
 	fc.Result = res
-	return ec.marshalNMovie2ᚖCP_DiscussionᚋgraphᚋmodelᚐMovie(ctx, field.Selections, res)
+	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_movie(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_member(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -496,12 +776,22 @@ func (ec *executionContext) fieldContext_Query_movie(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Movie_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Movie_name(ctx, field)
+			case "_id":
+				return ec.fieldContext_Member__id(ctx, field)
+			case "email":
+				return ec.fieldContext_Member_email(ctx, field)
+			case "password":
+				return ec.fieldContext_Member_password(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_Member_isAdmin(ctx, field)
+			case "username":
+				return ec.fieldContext_Member_username(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Member_nickname(ctx, field)
+			case "avatarPath":
+				return ec.fieldContext_Member_avatarPath(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Movie", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
 		},
 	}
 	defer func() {
@@ -511,15 +801,15 @@ func (ec *executionContext) fieldContext_Query_movie(ctx context.Context, field 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_movie_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_member_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_movies(ctx, field)
+func (ec *executionContext) _Query_members(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_members(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -532,7 +822,7 @@ func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Movies(rctx)
+		return ec.resolvers.Query().Members(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -544,12 +834,12 @@ func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Movie)
+	res := resTmp.([]*model.Member)
 	fc.Result = res
-	return ec.marshalNMovie2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐMovieᚄ(ctx, field.Selections, res)
+	return ec.marshalNMember2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐMemberᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_movies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_members(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -557,12 +847,22 @@ func (ec *executionContext) fieldContext_Query_movies(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Movie_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Movie_name(ctx, field)
+			case "_id":
+				return ec.fieldContext_Member__id(ctx, field)
+			case "email":
+				return ec.fieldContext_Member_email(ctx, field)
+			case "password":
+				return ec.fieldContext_Member_password(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_Member_isAdmin(ctx, field)
+			case "username":
+				return ec.fieldContext_Member_username(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Member_nickname(ctx, field)
+			case "avatarPath":
+				return ec.fieldContext_Member_avatarPath(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Movie", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
 		},
 	}
 	return fc, nil
@@ -2470,25 +2770,65 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputNewMovie(ctx context.Context, obj interface{}) (model.NewMovie, error) {
-	var it model.NewMovie
+func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj interface{}) (model.NewMember, error) {
+	var it model.NewMember
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name"}
+	fieldsInOrder := [...]string{"email", "password", "isAdmin", "username", "nickname", "avatarPath"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "name":
+		case "email":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			it.Email, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isAdmin":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isAdmin"))
+			it.IsAdmin, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "username":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+			it.Username, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nickname":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nickname"))
+			it.Nickname, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "avatarPath":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("avatarPath"))
+			it.AvatarPath, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -2506,26 +2846,61 @@ func (ec *executionContext) unmarshalInputNewMovie(ctx context.Context, obj inte
 
 // region    **************************** object.gotpl ****************************
 
-var movieImplementors = []string{"Movie"}
+var memberImplementors = []string{"Member"}
 
-func (ec *executionContext) _Movie(ctx context.Context, sel ast.SelectionSet, obj *model.Movie) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, movieImplementors)
+func (ec *executionContext) _Member(ctx context.Context, sel ast.SelectionSet, obj *model.Member) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, memberImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Movie")
-		case "id":
+			out.Values[i] = graphql.MarshalString("Member")
+		case "_id":
 
-			out.Values[i] = ec._Movie_id(ctx, field, obj)
+			out.Values[i] = ec._Member__id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "name":
+		case "email":
 
-			out.Values[i] = ec._Movie_name(ctx, field, obj)
+			out.Values[i] = ec._Member_email(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "password":
+
+			out.Values[i] = ec._Member_password(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "isAdmin":
+
+			out.Values[i] = ec._Member_isAdmin(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "username":
+
+			out.Values[i] = ec._Member_username(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nickname":
+
+			out.Values[i] = ec._Member_nickname(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "avatarPath":
+
+			out.Values[i] = ec._Member_avatarPath(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -2560,10 +2935,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "createMovie":
+		case "createMember":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createMovie(ctx, field)
+				return ec._Mutation_createMember(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -2599,7 +2974,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "movie":
+		case "member":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2608,7 +2983,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_movie(ctx, field)
+				res = ec._Query_member(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2622,7 +2997,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "movies":
+		case "members":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2631,7 +3006,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_movies(ctx, field)
+				res = ec._Query_members(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3016,11 +3391,11 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNMovie2CP_DiscussionᚋgraphᚋmodelᚐMovie(ctx context.Context, sel ast.SelectionSet, v model.Movie) graphql.Marshaler {
-	return ec._Movie(ctx, sel, &v)
+func (ec *executionContext) marshalNMember2CP_DiscussionᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v model.Member) graphql.Marshaler {
+	return ec._Member(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMovie2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐMovieᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Movie) graphql.Marshaler {
+func (ec *executionContext) marshalNMember2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Member) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3044,7 +3419,7 @@ func (ec *executionContext) marshalNMovie2ᚕᚖCP_Discussionᚋgraphᚋmodelᚐ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMovie2ᚖCP_DiscussionᚋgraphᚋmodelᚐMovie(ctx, sel, v[i])
+			ret[i] = ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3064,18 +3439,18 @@ func (ec *executionContext) marshalNMovie2ᚕᚖCP_Discussionᚋgraphᚋmodelᚐ
 	return ret
 }
 
-func (ec *executionContext) marshalNMovie2ᚖCP_DiscussionᚋgraphᚋmodelᚐMovie(ctx context.Context, sel ast.SelectionSet, v *model.Movie) graphql.Marshaler {
+func (ec *executionContext) marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v *model.Member) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Movie(ctx, sel, v)
+	return ec._Member(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNNewMovie2CP_DiscussionᚋgraphᚋmodelᚐNewMovie(ctx context.Context, v interface{}) (model.NewMovie, error) {
-	res, err := ec.unmarshalInputNewMovie(ctx, v)
+func (ec *executionContext) unmarshalNNewMember2CP_DiscussionᚋgraphᚋmodelᚐNewMember(ctx context.Context, v interface{}) (model.NewMember, error) {
+	res, err := ec.unmarshalInputNewMember(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

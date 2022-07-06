@@ -2,20 +2,30 @@
 #
 # https://gqlgen.com/getting-started/
 
-type Movie{
-  id: ID!
-  name: String!
+type Member {
+  _id: ID!
+  email: String!
+  password: String!
+  isAdmin: Boolean!
+  username: String!
+  nickname: String!
+  avatarPath: String!
 }
 
-input NewMovie{
-  name: String!
+input NewMember {
+  email: String!
+  password: String!
+  isAdmin: Boolean!
+  username: String!
+  nickname: String!
+  avatarPath: String!
 }
 
 type Mutation{
-  createMovie (input: NewMovie!): Movie!
+  createMember (input: NewMember!): Member!
 }
 
 type Query {
-  movie(_id: String!): Movie!
-  movies: [Movie!]!
+  member(_id: String!): Member!
+  members: [Member!]!
 }

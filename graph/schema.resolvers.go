@@ -4,27 +4,27 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"CP_Discussion/database"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/graph/model"
-	"CP_Discussion/database"
 	"context"
 )
 
 var db = database.Connect("mongodb://CPDiscussion:94879487@localhost:9487/")
 
-// CreateMovie is the resolver for the createMovie field.
-func (r *mutationResolver) CreateMovie(ctx context.Context, input model.NewMovie) (*model.Movie, error) {
-	return db.InsertMovieById(input), nil
+// CreateMember is the resolver for the createMember field.
+func (r *mutationResolver) CreateMember(ctx context.Context, input model.NewMember) (*model.Member, error) {
+	return db.InsertMember(input), nil
 }
 
-// Movie is the resolver for the movie field.
-func (r *queryResolver) Movie(ctx context.Context, id string) (*model.Movie, error) {
-	return db.FindMovieById(id), nil
+// Member is the resolver for the member field.
+func (r *queryResolver) Member(ctx context.Context, id string) (*model.Member, error) {
+	return db.FindMemberById(id), nil
 }
 
-// Movies is the resolver for the movies field.
-func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
-	return db.All(), nil
+// Members is the resolver for the members field.
+func (r *queryResolver) Members(ctx context.Context) ([]*model.Member, error) {
+	return db.AllMember(), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -2,11 +2,21 @@
 
 package model
 
-type Movie struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type Member struct {
+	ID         string `json:"_id"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	IsAdmin    bool   `json:"isAdmin"`
+	Username   string `json:"username"`
+	Nickname   string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
 }
 
-type NewMovie struct {
-	Name string `json:"name"`
+type NewMember struct {
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	IsAdmin    bool   `json:"isAdmin"`
+	Username   string `json:"username"`
+	Nickname   string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
 }
