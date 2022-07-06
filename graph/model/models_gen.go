@@ -3,20 +3,20 @@
 package model
 
 type Member struct {
-	ID         string `json:"_id"`
-	Email      string `json:"email"`
-	Password   string `json:"password"`
-	IsAdmin    bool   `json:"isAdmin"`
-	Username   string `json:"username"`
-	Nickname   string `json:"nickname"`
-	AvatarPath string `json:"avatarPath"`
+	ID         string `json:"_id" bson:"_id"`
+	Email      string `json:"email" bson:"email"`
+	Password   string `json:"password" bson:"password"`
+	IsAdmin    bool   `json:"isAdmin" bson:"isAdmin"`
+	Username   string `json:"username" bson:"username"`
+	Nickname   string `json:"nickname" bson:"nickname"`
+	AvatarPath string `json:"avatarPath" bson:"avatarPath"`
 }
 
 type NewMember struct {
-	Email      string `json:"email"`
-	Password   string `json:"password"`
-	IsAdmin    bool   `json:"isAdmin"`
-	Username   string `json:"username"`
-	Nickname   string `json:"nickname"`
-	AvatarPath string `json:"avatarPath"`
+	Email      string `json:"email" bson:"email"`
+	Password   string `json:"password" bson:"password"`
+	IsAdmin    bool   `json:"isAdmin" bson:"isAdmin"`
+	Username   string `json:"username" bson:"username"`
+	Nickname   string `json:"nickname" bson:"nickname"`
+	AvatarPath string `json:"avatarPath" bson:"avatarPath"`
 }
