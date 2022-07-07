@@ -106,12 +106,18 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 	defer cancel()
 	res := memberColl.FindOne(ctx, bson.M{"email": email})
 	member := model.Member{}
-	res.Decode(&member)
-
+	err := res.Decode(&member)
 	auth := model.Auth{
-		State: member.Password == password,
+		State: false,
 		Token: "",
 	}
+
+	if err != nil {
+		return &auth
+	}
+
+	auth.State = member.Password == password
+
 	if auth.State {
 		auth.Token = "Hey I am in, please give me a jwt token in the future"
 	}
