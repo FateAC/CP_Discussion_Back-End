@@ -19,6 +19,8 @@ type DB struct {
 
 const dbName = "cp-discussion-db"
 
+var DBConnect = Connect("mongodb://CPDiscussion:94879487@localhost:9487/")
+
 func Connect(dbUrl string) *DB {
 	client, err := mongo.NewClient(options.Client().ApplyURI(dbUrl))
 	if err != nil {
