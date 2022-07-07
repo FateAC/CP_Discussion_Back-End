@@ -44,6 +44,11 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Auth struct {
+		State func(childComplexity int) int
+		Token func(childComplexity int) int
+	}
+
 	Member struct {
 		AvatarPath func(childComplexity int) int
 		Email      func(childComplexity int) int
@@ -56,6 +61,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateMember func(childComplexity int, input model.NewMember) int
+		LoginCheck   func(childComplexity int, input model.Login) int
 	}
 
 	Query struct {
@@ -66,6 +72,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateMember(ctx context.Context, input model.NewMember) (*model.Member, error)
+	LoginCheck(ctx context.Context, input model.Login) (*model.Auth, error)
 }
 type QueryResolver interface {
 	Member(ctx context.Context, id string) (*model.Member, error)
@@ -86,6 +93,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Auth.state":
+		if e.complexity.Auth.State == nil {
+			break
+		}
+
+		return e.complexity.Auth.State(childComplexity), true
+
+	case "Auth.token":
+		if e.complexity.Auth.Token == nil {
+			break
+		}
+
+		return e.complexity.Auth.Token(childComplexity), true
 
 	case "Member.avatarPath":
 		if e.complexity.Member.AvatarPath == nil {
@@ -148,6 +169,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateMember(childComplexity, args["input"].(model.NewMember)), true
 
+	case "Mutation.loginCheck":
+		if e.complexity.Mutation.LoginCheck == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_loginCheck_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.LoginCheck(childComplexity, args["input"].(model.Login)), true
+
 	case "Query.member":
 		if e.complexity.Query.Member == nil {
 			break
@@ -175,6 +208,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputLogin,
 		ec.unmarshalInputNewMember,
 	)
 	first := true
@@ -250,6 +284,11 @@ type Member {
   avatarPath: String!
 }
 
+type Auth {
+  token: String!
+  state: Boolean!
+}
+
 input NewMember {
   email: String!
   password: String!
@@ -259,8 +298,14 @@ input NewMember {
   avatarPath: String!
 }
 
+input Login {
+  email: String!
+  password: String!
+}
+
 type Mutation{
   createMember (input: NewMember!): Member!
+  loginCheck(input: Login!): Auth! 
 }
 
 type Query {
@@ -282,6 +327,21 @@ func (ec *executionContext) field_Mutation_createMember_args(ctx context.Context
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewMember2CP_DiscussionᚋgraphᚋmodelᚐNewMember(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_loginCheck_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.Login
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNLogin2CP_DiscussionᚋgraphᚋmodelᚐLogin(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -357,6 +417,94 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Auth_token(ctx context.Context, field graphql.CollectedField, obj *model.Auth) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auth_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auth_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auth",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Auth_state(ctx context.Context, field graphql.CollectedField, obj *model.Auth) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auth_state(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.State, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auth_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auth",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Member__id(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Member__id(ctx, field)
@@ -731,6 +879,67 @@ func (ec *executionContext) fieldContext_Mutation_createMember(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_loginCheck(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_loginCheck(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().LoginCheck(rctx, fc.Args["input"].(model.Login))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Auth)
+	fc.Result = res
+	return ec.marshalNAuth2ᚖCP_DiscussionᚋgraphᚋmodelᚐAuth(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_loginCheck(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "token":
+				return ec.fieldContext_Auth_token(ctx, field)
+			case "state":
+				return ec.fieldContext_Auth_state(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Auth", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_loginCheck_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -2770,6 +2979,42 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputLogin(ctx context.Context, obj interface{}) (model.Login, error) {
+	var it model.Login
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"email", "password"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "email":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			it.Email, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj interface{}) (model.NewMember, error) {
 	var it model.NewMember
 	asMap := map[string]interface{}{}
@@ -2845,6 +3090,41 @@ func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj int
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var authImplementors = []string{"Auth"}
+
+func (ec *executionContext) _Auth(ctx context.Context, sel ast.SelectionSet, obj *model.Auth) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, authImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Auth")
+		case "token":
+
+			out.Values[i] = ec._Auth_token(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "state":
+
+			out.Values[i] = ec._Auth_state(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
 
 var memberImplementors = []string{"Member"}
 
@@ -2939,6 +3219,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createMember(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "loginCheck":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_loginCheck(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -3361,6 +3650,20 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAuth2CP_DiscussionᚋgraphᚋmodelᚐAuth(ctx context.Context, sel ast.SelectionSet, v model.Auth) graphql.Marshaler {
+	return ec._Auth(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAuth2ᚖCP_DiscussionᚋgraphᚋmodelᚐAuth(ctx context.Context, sel ast.SelectionSet, v *model.Auth) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Auth(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3389,6 +3692,11 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNLogin2CP_DiscussionᚋgraphᚋmodelᚐLogin(ctx context.Context, v interface{}) (model.Login, error) {
+	res, err := ec.unmarshalInputLogin(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNMember2CP_DiscussionᚋgraphᚋmodelᚐMember(ctx context.Context, sel ast.SelectionSet, v model.Member) graphql.Marshaler {

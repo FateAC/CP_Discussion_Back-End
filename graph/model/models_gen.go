@@ -2,6 +2,16 @@
 
 package model
 
+type Auth struct {
+	Token string `json:"token" bson:"token"`
+	State bool   `json:"state" bson:"state"`
+}
+
+type Login struct {
+	Email    string `json:"email" bson:"email"`
+	Password string `json:"password" bson:"password"`
+}
+
 type Member struct {
 	ID         string `json:"_id" bson:"_id"`
 	Email      string `json:"email" bson:"email"`

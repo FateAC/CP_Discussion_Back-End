@@ -12,6 +12,11 @@ type Member {
   avatarPath: String!
 }
 
+type Auth {
+  token: String!
+  state: Boolean!
+}
+
 input NewMember {
   email: String!
   password: String!
@@ -21,8 +26,14 @@ input NewMember {
   avatarPath: String!
 }
 
+input Login {
+  email: String!
+  password: String!
+}
+
 type Mutation{
   createMember (input: NewMember!): Member!
+  loginCheck(input: Login!): Auth! 
 }
 
 type Query {
