@@ -17,6 +17,8 @@ type DB struct {
 	client *mongo.Client
 }
 
+const dbName = "cp-discussion-db"
+
 func Connect(dbUrl string) *DB {
 	client, err := mongo.NewClient(options.Client().ApplyURI(dbUrl))
 	if err != nil {
@@ -44,7 +46,7 @@ func Connect(dbUrl string) *DB {
 }
 
 func (db *DB) InsertMember(input model.NewMember) *model.Member {
-	memberColl := db.client.Database("cp-discussion-db").Collection("member")
+	memberColl := db.client.Database(dbName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	res, err := memberColl.InsertOne(ctx, input)
@@ -67,7 +69,7 @@ func (db *DB) FindMemberById(id string) *model.Member {
 	if err != nil {
 		log.Fatal(err)
 	}
-	memberColl := db.client.Database("cp-discussion-db").Collection("member")
+	memberColl := db.client.Database(dbName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	res := memberColl.FindOne(ctx, bson.M{"_id": ObjectID})
@@ -77,7 +79,7 @@ func (db *DB) FindMemberById(id string) *model.Member {
 }
 
 func (db *DB) AllMember() []*model.Member {
-	memberColl := db.client.Database("cp-discussion-db").Collection("member")
+	memberColl := db.client.Database(dbName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	cur, err := memberColl.Find(ctx, bson.D{})
@@ -94,4 +96,25 @@ func (db *DB) AllMember() []*model.Member {
 		members = append(members, member)
 	}
 	return members
+}
+
+func (db *DB) LoginCheck(input model.Login) *model.Auth {
+	email := input.Email
+	password := input.Password
+	memberColl := db.client.Database(dbName).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	res := memberColl.FindOne(ctx, bson.M{"email": email})
+	member := model.Member{}
+	res.Decode(&member)
+
+	auth := model.Auth{
+		State: member.Password == password,
+		Token: "",
+	}
+	if auth.State {
+		auth.Token = "Hey I am in, please give me a jwt token in the future"
+	}
+
+	return &auth
 }
