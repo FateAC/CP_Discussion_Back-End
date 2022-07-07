@@ -1,6 +1,7 @@
 package database
 
 import (
+	"CP_Discussion/auth"
 	"CP_Discussion/env"
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
@@ -124,7 +125,7 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	auth := model.Auth{
+	resAuth := model.Auth{
 		State: false,
 		Token: "",
 	}
@@ -132,20 +133,26 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 	res := memberColl.FindOne(ctx, bson.M{"email": email})
 	if err := res.Err(); err != nil {
 		log.Warning.Print(err)
-		return &auth
+		return &resAuth
 	}
 
 	member := model.Member{}
 	err := res.Decode(&member)
 	if err != nil {
 		log.Warning.Print(err)
-		return &auth
+		return &resAuth
 	}
 
-	auth.State = member.Password == password
-	if auth.State {
-		auth.Token = "Hey I am in, please give me a jwt token in the future"
+	if member.Password == password {
+		token, err := auth.CreatToken(member.ID)
+		if err != nil {
+			log.Warning.Print(err)
+			return &resAuth
+		}
+		resAuth = model.Auth{
+			State: true,
+			Token: token,
+		}
 	}
-
-	return &auth
+	return &resAuth
 }

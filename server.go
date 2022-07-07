@@ -1,12 +1,12 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
 	"CP_Discussion/graph"
 	"CP_Discussion/graph/generated"
+	"CP_Discussion/log"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -31,6 +31,6 @@ func main() {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", c.Handler(srv))
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Info.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Error.Fatal(http.ListenAndServe(":"+port, nil))
 }
