@@ -1,8 +1,10 @@
 package database
 
 import (
+	"CP_Discussion/env"
 	"CP_Discussion/graph/model"
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -17,9 +19,15 @@ type DB struct {
 	client *mongo.Client
 }
 
-const dbName = "cp-discussion-db"
-
-var DBConnect = Connect("mongodb://CPDiscussion:94879487@localhost:9487/")
+var DBConnect = Connect(
+	fmt.Sprintf(
+		"mongodb://%s:%s@%s:%s/",
+		env.DBUsername,
+		env.DBPassword,
+		env.DBUrl,
+		env.DBPort,
+	),
+)
 
 func Connect(dbUrl string) *DB {
 	client, err := mongo.NewClient(options.Client().ApplyURI(dbUrl))
@@ -48,7 +56,7 @@ func Connect(dbUrl string) *DB {
 }
 
 func (db *DB) InsertMember(input model.NewMember) *model.Member {
-	memberColl := db.client.Database(dbName).Collection("member")
+	memberColl := db.client.Database(env.DBName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	res, err := memberColl.InsertOne(ctx, input)
@@ -71,7 +79,7 @@ func (db *DB) FindMemberById(id string) *model.Member {
 	if err != nil {
 		log.Fatal(err)
 	}
-	memberColl := db.client.Database(dbName).Collection("member")
+	memberColl := db.client.Database(env.DBName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	res := memberColl.FindOne(ctx, bson.M{"_id": ObjectID})
@@ -81,7 +89,7 @@ func (db *DB) FindMemberById(id string) *model.Member {
 }
 
 func (db *DB) AllMember() []*model.Member {
-	memberColl := db.client.Database(dbName).Collection("member")
+	memberColl := db.client.Database(env.DBName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	cur, err := memberColl.Find(ctx, bson.D{})
@@ -103,7 +111,7 @@ func (db *DB) AllMember() []*model.Member {
 func (db *DB) LoginCheck(input model.Login) *model.Auth {
 	email := input.Email
 	password := input.Password
-	memberColl := db.client.Database(dbName).Collection("member")
+	memberColl := db.client.Database(env.DBName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	res := memberColl.FindOne(ctx, bson.M{"email": email})
