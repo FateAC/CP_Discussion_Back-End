@@ -19,7 +19,7 @@ func getJWTKey() string {
 	if err != nil {
 		log.Error.Fatal("Cannot get jwtKey!!")
 	}
-	res := strings.Replace(string(dat), "\r\n", "", -1)
-	res = strings.Replace(res, "\n", "", -1)
+	res := strings.ReplaceAll(string(dat), "\r\n", "")
+	res = strings.ReplaceAll(res, "\n", "")
 	return res
 }

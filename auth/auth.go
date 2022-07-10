@@ -8,6 +8,12 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+var tokenErrs = []error{
+	jwt.ErrTokenMalformed,
+	jwt.ErrTokenExpired,
+	jwt.ErrTokenNotValidYet,
+}
+
 type Claims struct {
 	userID string
 	jwt.RegisteredClaims
@@ -38,16 +44,13 @@ func ParseToken(inToken string) (*Claims, error) {
 	)
 	if err != nil {
 		if ve, ok := err.(*jwt.ValidationError); ok {
-			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-				return nil, errors.New("that's not even a token")
-			} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
-				return nil, errors.New("token is expired")
-			} else if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
-				return nil, errors.New("token not active yet")
-			} else {
-				return nil, errors.New("couldn't handle this token")
+			for _, tokenErr := range tokenErrs {
+				if ve.Is(tokenErr) {
+					return nil, tokenErr
+				}
 			}
 		}
+		return nil, errors.New("couldn't handle this token")
 	}
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
