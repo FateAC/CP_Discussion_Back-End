@@ -10,6 +10,7 @@ type Member {
   username: String!
   nickname: String!
   avatarPath: String!
+  courses: [Course!]!
 }
 
 type Auth {
@@ -24,6 +25,7 @@ input NewMember {
   username: String!
   nickname: String!
   avatarPath: String!
+  courses: [NewCourse!]!
 }
 
 input Login {
@@ -31,9 +33,19 @@ input Login {
   password: String!
 }
 
+type Course {
+  name: String!
+}
+
+input NewCourse {
+  name: String!
+}
+
 type Mutation{
   createMember (input: NewMember!): Member!
-  loginCheck(input: Login!): Auth! 
+  loginCheck(input: Login!): Auth!
+  addMemberCourse (id: String!, course: NewCourse!): Member!
+  removeMemberCourse (id: String!, course: NewCourse!): Member!
 }
 
 type Query {

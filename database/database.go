@@ -6,7 +6,6 @@ import (
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
 	"context"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -74,6 +73,7 @@ func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
 		Username:   input.Username,
 		Nickname:   input.Nickname,
 		AvatarPath: input.AvatarPath,
+		Courses:    parseCourses(input.Courses),
 	}, nil
 }
 
@@ -155,4 +155,66 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 		}
 	}
 	return &resAuth
+}
+
+func parseCourse(course *model.NewCourse) *model.Course {
+	return &model.Course{Name: course.Name}
+}
+
+func parseCourses(courses []*model.NewCourse) []*model.Course {
+	var res []*model.Course
+	for _, course := range courses {
+		res = append(res, parseCourse(course))
+	}
+	return res
+}
+
+func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
+	ObjectID, err := primitive.ObjectIDFromHex(id)
+	memberColl := db.client.Database(env.DBName).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	course := parseCourse(&input)
+
+	filter := bson.M{"_id": ObjectID}
+	update := bson.M{"$addToSet": bson.M{"courses": course}}
+	after := options.After
+	opts := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+
+	member := model.Member{}
+	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+
+	return &member, nil
+}
+
+func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
+	ObjectID, err := primitive.ObjectIDFromHex(id)
+	memberColl := db.client.Database(env.DBName).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	course := parseCourse(&input)
+
+	filter := bson.M{"_id": ObjectID}
+	update := bson.M{"$pull": bson.M{"courses": course}}
+	after := options.After
+	opts := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+
+	member := model.Member{}
+	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+
+	return &member, nil
 }

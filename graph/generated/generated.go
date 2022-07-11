@@ -49,8 +49,13 @@ type ComplexityRoot struct {
 		Token func(childComplexity int) int
 	}
 
+	Course struct {
+		Name func(childComplexity int) int
+	}
+
 	Member struct {
 		AvatarPath func(childComplexity int) int
+		Courses    func(childComplexity int) int
 		Email      func(childComplexity int) int
 		ID         func(childComplexity int) int
 		IsAdmin    func(childComplexity int) int
@@ -60,8 +65,10 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateMember func(childComplexity int, input model.NewMember) int
-		LoginCheck   func(childComplexity int, input model.Login) int
+		AddMemberCourse    func(childComplexity int, id string, course model.NewCourse) int
+		CreateMember       func(childComplexity int, input model.NewMember) int
+		LoginCheck         func(childComplexity int, input model.Login) int
+		RemoveMemberCourse func(childComplexity int, id string, course model.NewCourse) int
 	}
 
 	Query struct {
@@ -73,6 +80,8 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateMember(ctx context.Context, input model.NewMember) (*model.Member, error)
 	LoginCheck(ctx context.Context, input model.Login) (*model.Auth, error)
+	AddMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error)
+	RemoveMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error)
 }
 type QueryResolver interface {
 	Member(ctx context.Context, id string) (*model.Member, error)
@@ -108,12 +117,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Auth.Token(childComplexity), true
 
+	case "Course.name":
+		if e.complexity.Course.Name == nil {
+			break
+		}
+
+		return e.complexity.Course.Name(childComplexity), true
+
 	case "Member.avatarPath":
 		if e.complexity.Member.AvatarPath == nil {
 			break
 		}
 
 		return e.complexity.Member.AvatarPath(childComplexity), true
+
+	case "Member.courses":
+		if e.complexity.Member.Courses == nil {
+			break
+		}
+
+		return e.complexity.Member.Courses(childComplexity), true
 
 	case "Member.email":
 		if e.complexity.Member.Email == nil {
@@ -157,6 +180,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Member.Username(childComplexity), true
 
+	case "Mutation.addMemberCourse":
+		if e.complexity.Mutation.AddMemberCourse == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addMemberCourse_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddMemberCourse(childComplexity, args["id"].(string), args["course"].(model.NewCourse)), true
+
 	case "Mutation.createMember":
 		if e.complexity.Mutation.CreateMember == nil {
 			break
@@ -180,6 +215,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.LoginCheck(childComplexity, args["input"].(model.Login)), true
+
+	case "Mutation.removeMemberCourse":
+		if e.complexity.Mutation.RemoveMemberCourse == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeMemberCourse_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveMemberCourse(childComplexity, args["id"].(string), args["course"].(model.NewCourse)), true
 
 	case "Query.member":
 		if e.complexity.Query.Member == nil {
@@ -209,6 +256,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputLogin,
+		ec.unmarshalInputNewCourse,
 		ec.unmarshalInputNewMember,
 	)
 	first := true
@@ -282,6 +330,7 @@ type Member {
   username: String!
   nickname: String!
   avatarPath: String!
+  courses: [Course!]!
 }
 
 type Auth {
@@ -296,6 +345,7 @@ input NewMember {
   username: String!
   nickname: String!
   avatarPath: String!
+  courses: [NewCourse!]!
 }
 
 input Login {
@@ -303,9 +353,19 @@ input Login {
   password: String!
 }
 
+type Course {
+  name: String!
+}
+
+input NewCourse {
+  name: String!
+}
+
 type Mutation{
   createMember (input: NewMember!): Member!
-  loginCheck(input: Login!): Auth! 
+  loginCheck(input: Login!): Auth!
+  addMemberCourse (id: String!, course: NewCourse!): Member!
+  removeMemberCourse (id: String!, course: NewCourse!): Member!
 }
 
 type Query {
@@ -319,6 +379,30 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_addMemberCourse_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 model.NewCourse
+	if tmp, ok := rawArgs["course"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("course"))
+		arg1, err = ec.unmarshalNNewCourse2CP_DiscussionᚋgraphᚋmodelᚐNewCourse(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["course"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -347,6 +431,30 @@ func (ec *executionContext) field_Mutation_loginCheck_args(ctx context.Context, 
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeMemberCourse_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 model.NewCourse
+	if tmp, ok := rawArgs["course"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("course"))
+		arg1, err = ec.unmarshalNNewCourse2CP_DiscussionᚋgraphᚋmodelᚐNewCourse(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["course"] = arg1
 	return args, nil
 }
 
@@ -501,6 +609,50 @@ func (ec *executionContext) fieldContext_Auth_state(ctx context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Course_name(ctx context.Context, field graphql.CollectedField, obj *model.Course) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Course_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Course_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Course",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -814,6 +966,54 @@ func (ec *executionContext) fieldContext_Member_avatarPath(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Member_courses(ctx context.Context, field graphql.CollectedField, obj *model.Member) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Member_courses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Courses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Course)
+	fc.Result = res
+	return ec.marshalNCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐCourseᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Member_courses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Member",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Course_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createMember(ctx, field)
 	if err != nil {
@@ -867,6 +1067,8 @@ func (ec *executionContext) fieldContext_Mutation_createMember(ctx context.Conte
 				return ec.fieldContext_Member_nickname(ctx, field)
 			case "avatarPath":
 				return ec.fieldContext_Member_avatarPath(ctx, field)
+			case "courses":
+				return ec.fieldContext_Member_courses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
 		},
@@ -946,6 +1148,152 @@ func (ec *executionContext) fieldContext_Mutation_loginCheck(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_addMemberCourse(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_addMemberCourse(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddMemberCourse(rctx, fc.Args["id"].(string), fc.Args["course"].(model.NewCourse))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Member)
+	fc.Result = res
+	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addMemberCourse(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "_id":
+				return ec.fieldContext_Member__id(ctx, field)
+			case "email":
+				return ec.fieldContext_Member_email(ctx, field)
+			case "password":
+				return ec.fieldContext_Member_password(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_Member_isAdmin(ctx, field)
+			case "username":
+				return ec.fieldContext_Member_username(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Member_nickname(ctx, field)
+			case "avatarPath":
+				return ec.fieldContext_Member_avatarPath(ctx, field)
+			case "courses":
+				return ec.fieldContext_Member_courses(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addMemberCourse_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeMemberCourse(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_removeMemberCourse(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveMemberCourse(rctx, fc.Args["id"].(string), fc.Args["course"].(model.NewCourse))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Member)
+	fc.Result = res
+	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removeMemberCourse(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "_id":
+				return ec.fieldContext_Member__id(ctx, field)
+			case "email":
+				return ec.fieldContext_Member_email(ctx, field)
+			case "password":
+				return ec.fieldContext_Member_password(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_Member_isAdmin(ctx, field)
+			case "username":
+				return ec.fieldContext_Member_username(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Member_nickname(ctx, field)
+			case "avatarPath":
+				return ec.fieldContext_Member_avatarPath(ctx, field)
+			case "courses":
+				return ec.fieldContext_Member_courses(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeMemberCourse_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_member(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_member(ctx, field)
 	if err != nil {
@@ -999,6 +1347,8 @@ func (ec *executionContext) fieldContext_Query_member(ctx context.Context, field
 				return ec.fieldContext_Member_nickname(ctx, field)
 			case "avatarPath":
 				return ec.fieldContext_Member_avatarPath(ctx, field)
+			case "courses":
+				return ec.fieldContext_Member_courses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
 		},
@@ -1070,6 +1420,8 @@ func (ec *executionContext) fieldContext_Query_members(ctx context.Context, fiel
 				return ec.fieldContext_Member_nickname(ctx, field)
 			case "avatarPath":
 				return ec.fieldContext_Member_avatarPath(ctx, field)
+			case "courses":
+				return ec.fieldContext_Member_courses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
 		},
@@ -3015,6 +3367,34 @@ func (ec *executionContext) unmarshalInputLogin(ctx context.Context, obj interfa
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewCourse(ctx context.Context, obj interface{}) (model.NewCourse, error) {
+	var it model.NewCourse
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj interface{}) (model.NewMember, error) {
 	var it model.NewMember
 	asMap := map[string]interface{}{}
@@ -3022,7 +3402,7 @@ func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"email", "password", "isAdmin", "username", "nickname", "avatarPath"}
+	fieldsInOrder := [...]string{"email", "password", "isAdmin", "username", "nickname", "avatarPath", "courses"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3077,6 +3457,14 @@ func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj int
 			if err != nil {
 				return it, err
 			}
+		case "courses":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("courses"))
+			it.Courses, err = ec.unmarshalNNewCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐNewCourseᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -3111,6 +3499,34 @@ func (ec *executionContext) _Auth(ctx context.Context, sel ast.SelectionSet, obj
 		case "state":
 
 			out.Values[i] = ec._Auth_state(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var courseImplementors = []string{"Course"}
+
+func (ec *executionContext) _Course(ctx context.Context, sel ast.SelectionSet, obj *model.Course) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, courseImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Course")
+		case "name":
+
+			out.Values[i] = ec._Course_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -3185,6 +3601,13 @@ func (ec *executionContext) _Member(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "courses":
+
+			out.Values[i] = ec._Member_courses(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3228,6 +3651,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_loginCheck(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "addMemberCourse":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addMemberCourse(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeMemberCourse":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeMemberCourse(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -3679,6 +4120,60 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐCourseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Course) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCourse2ᚖCP_DiscussionᚋgraphᚋmodelᚐCourse(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCourse2ᚖCP_DiscussionᚋgraphᚋmodelᚐCourse(ctx context.Context, sel ast.SelectionSet, v *model.Course) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Course(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3755,6 +4250,33 @@ func (ec *executionContext) marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMe
 		return graphql.Null
 	}
 	return ec._Member(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNNewCourse2CP_DiscussionᚋgraphᚋmodelᚐNewCourse(ctx context.Context, v interface{}) (model.NewCourse, error) {
+	res, err := ec.unmarshalInputNewCourse(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐNewCourseᚄ(ctx context.Context, v interface{}) ([]*model.NewCourse, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.NewCourse, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNNewCourse2ᚖCP_DiscussionᚋgraphᚋmodelᚐNewCourse(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNNewCourse2ᚖCP_DiscussionᚋgraphᚋmodelᚐNewCourse(ctx context.Context, v interface{}) (*model.NewCourse, error) {
+	res, err := ec.unmarshalInputNewCourse(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNNewMember2CP_DiscussionᚋgraphᚋmodelᚐNewMember(ctx context.Context, v interface{}) (model.NewMember, error) {

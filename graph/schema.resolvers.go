@@ -20,6 +20,16 @@ func (r *mutationResolver) LoginCheck(ctx context.Context, input model.Login) (*
 	return database.DBConnect.LoginCheck(input), nil
 }
 
+// AddMemberCourse is the resolver for the addMemberCourse field.
+func (r *mutationResolver) AddMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error) {
+	return database.DBConnect.AddMemberCourse(id, course)
+}
+
+// RemoveMemberCourse is the resolver for the removeMemberCourse field.
+func (r *mutationResolver) RemoveMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error) {
+	return database.DBConnect.RemoveMemberCourse(id, course)
+}
+
 // Member is the resolver for the member field.
 func (r *queryResolver) Member(ctx context.Context, id string) (*model.Member, error) {
 	return database.DBConnect.FindMemberById(id)

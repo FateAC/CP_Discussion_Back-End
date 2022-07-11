@@ -7,26 +7,36 @@ type Auth struct {
 	State bool   `json:"state" bson:"state"`
 }
 
+type Course struct {
+	Name string `json:"name" bson:"name"`
+}
+
 type Login struct {
 	Email    string `json:"email" bson:"email"`
 	Password string `json:"password" bson:"password"`
 }
 
 type Member struct {
-	ID         string `json:"_id" bson:"_id"`
-	Email      string `json:"email" bson:"email"`
-	Password   string `json:"password" bson:"password"`
-	IsAdmin    bool   `json:"isAdmin" bson:"isAdmin"`
-	Username   string `json:"username" bson:"username"`
-	Nickname   string `json:"nickname" bson:"nickname"`
-	AvatarPath string `json:"avatarPath" bson:"avatarPath"`
+	ID         string    `json:"_id" bson:"_id"`
+	Email      string    `json:"email" bson:"email"`
+	Password   string    `json:"password" bson:"password"`
+	IsAdmin    bool      `json:"isAdmin" bson:"isAdmin"`
+	Username   string    `json:"username" bson:"username"`
+	Nickname   string    `json:"nickname" bson:"nickname"`
+	AvatarPath string    `json:"avatarPath" bson:"avatarPath"`
+	Courses    []*Course `json:"courses" bson:"courses"`
+}
+
+type NewCourse struct {
+	Name string `json:"name" bson:"name"`
 }
 
 type NewMember struct {
-	Email      string `json:"email" bson:"email"`
-	Password   string `json:"password" bson:"password"`
-	IsAdmin    bool   `json:"isAdmin" bson:"isAdmin"`
-	Username   string `json:"username" bson:"username"`
-	Nickname   string `json:"nickname" bson:"nickname"`
-	AvatarPath string `json:"avatarPath" bson:"avatarPath"`
+	Email      string       `json:"email" bson:"email"`
+	Password   string       `json:"password" bson:"password"`
+	IsAdmin    bool         `json:"isAdmin" bson:"isAdmin"`
+	Username   string       `json:"username" bson:"username"`
+	Nickname   string       `json:"nickname" bson:"nickname"`
+	AvatarPath string       `json:"avatarPath" bson:"avatarPath"`
+	Courses    []*NewCourse `json:"courses" bson:"courses"`
 }
