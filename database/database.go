@@ -83,16 +83,15 @@ func (db *DB) FindMemberById(id string) (*model.Member, error) {
 		log.Warning.Print(err)
 		return nil, err
 	}
+	member := model.Member{}
 	memberColl := db.client.Database(env.DBName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	res := memberColl.FindOne(ctx, bson.M{"_id": ObjectID})
-	if err = res.Err(); err != nil {
+	err = memberColl.FindOne(ctx, bson.M{"_id": ObjectID}).Decode(&member)
+	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
 	}
-	member := model.Member{}
-	res.Decode(&member)
 	return &member, nil
 }
 
@@ -106,14 +105,10 @@ func (db *DB) AllMember() ([]*model.Member, error) {
 		return nil, err
 	}
 	var members []*model.Member
-	for cur.Next(ctx) {
-		member := model.Member{}
-		err := cur.Decode(&member)
-		if err != nil {
-			log.Warning.Print(err)
-			return nil, err
-		}
-		members = append(members, &member)
+	err = cur.All(ctx, &members)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
 	}
 	return members, nil
 }
@@ -124,35 +119,27 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 	memberColl := db.client.Database(env.DBName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-
 	resAuth := model.Auth{
 		State: false,
 		Token: "",
 	}
-
-	res := memberColl.FindOne(ctx, bson.M{"email": email})
-	if err := res.Err(); err != nil {
-		log.Warning.Print(err)
-		return &resAuth
-	}
-
 	member := model.Member{}
-	err := res.Decode(&member)
+	err := memberColl.FindOne(ctx, bson.M{"email": email}).Decode(&member)
 	if err != nil {
 		log.Warning.Print(err)
 		return &resAuth
 	}
-
-	if member.Password == password {
-		token, err := auth.CreatToken(member.ID)
-		if err != nil {
-			log.Warning.Print(err)
+	if member.Password != password {
+		return &resAuth
+	}
+	token, err := auth.CreatToken(member.ID)
+	if err != nil {
+		log.Warning.Print(err)
 			return &resAuth
 		}
-		resAuth = model.Auth{
-			State: true,
-			Token: token,
-		}
+	resAuth = model.Auth{
+		State: true,
+		Token: token,
 	}
 	return &resAuth
 }
@@ -174,23 +161,19 @@ func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, 
 	memberColl := db.client.Database(env.DBName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-
 	course := parseCourse(&input)
-
 	filter := bson.M{"_id": ObjectID}
 	update := bson.M{"$addToSet": bson.M{"courses": course}}
 	after := options.After
 	opts := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
 	}
-
 	member := model.Member{}
 	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
 	}
-
 	return &member, nil
 }
 
@@ -199,22 +182,18 @@ func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Membe
 	memberColl := db.client.Database(env.DBName).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-
 	course := parseCourse(&input)
-
 	filter := bson.M{"_id": ObjectID}
 	update := bson.M{"$pull": bson.M{"courses": course}}
 	after := options.After
 	opts := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
 	}
-
 	member := model.Member{}
 	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
 	}
-
 	return &member, nil
 }
