@@ -2,6 +2,8 @@
 #
 # https://gqlgen.com/getting-started/
 
+scalar Time
+
 type Member {
   _id: ID!
   email: String!
@@ -39,6 +41,21 @@ type Course {
 
 input NewCourse {
   name: String!
+}
+
+type Comment {
+  commenter: ID!
+  content: String!
+  mainLevel: Int!
+  subLevel: Int!
+  timestamp: Time!
+}
+
+input NewComment {
+  commenter: ID!
+  content: String!
+  mainLevel: Int!
+  subLevel: Int!
 }
 
 type Mutation{
