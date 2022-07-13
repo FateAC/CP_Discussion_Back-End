@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/99designs/gqlgen v0.17.12
 	github.com/golang-jwt/jwt/v4 v4.4.2
+	github.com/gorilla/mux v1.8.0
 	github.com/rs/cors v1.8.2
 	github.com/vektah/gqlparser/v2 v2.4.6
 	go.mongodb.org/mongo-driver v1.9.1

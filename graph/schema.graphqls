@@ -2,6 +2,9 @@
 #
 # https://gqlgen.com/getting-started/
 
+directive @auth on FIELD_DEFINITION
+directive @admin on FIELD_DEFINITION
+
 scalar Time
 
 type Member {
@@ -61,8 +64,8 @@ input NewComment {
 type Mutation{
   createMember (input: NewMember!): Member!
   loginCheck(input: Login!): Auth!
-  addMemberCourse (id: String!, course: NewCourse!): Member!
-  removeMemberCourse (id: String!, course: NewCourse!): Member!
+  addMemberCourse (id: String!, course: NewCourse!): Member! @admin
+  removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
 }
 
 type Query {

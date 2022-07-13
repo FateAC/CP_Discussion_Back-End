@@ -42,6 +42,8 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	Admin func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	Auth  func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -367,6 +369,9 @@ var sources = []*ast.Source{
 #
 # https://gqlgen.com/getting-started/
 
+directive @auth on FIELD_DEFINITION
+directive @admin on FIELD_DEFINITION
+
 scalar Time
 
 type Member {
@@ -426,8 +431,8 @@ input NewComment {
 type Mutation{
   createMember (input: NewMember!): Member!
   loginCheck(input: Login!): Auth!
-  addMemberCourse (id: String!, course: NewCourse!): Member!
-  removeMemberCourse (id: String!, course: NewCourse!): Member!
+  addMemberCourse (id: String!, course: NewCourse!): Member! @admin
+  removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
 }
 
 type Query {
@@ -1443,8 +1448,28 @@ func (ec *executionContext) _Mutation_addMemberCourse(ctx context.Context, field
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddMemberCourse(rctx, fc.Args["id"].(string), fc.Args["course"].(model.NewCourse))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().AddMemberCourse(rctx, fc.Args["id"].(string), fc.Args["course"].(model.NewCourse))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Admin == nil {
+				return nil, errors.New("directive admin is not implemented")
+			}
+			return ec.directives.Admin(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Member); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *CP_Discussion/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1516,8 +1541,28 @@ func (ec *executionContext) _Mutation_removeMemberCourse(ctx context.Context, fi
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveMemberCourse(rctx, fc.Args["id"].(string), fc.Args["course"].(model.NewCourse))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().RemoveMemberCourse(rctx, fc.Args["id"].(string), fc.Args["course"].(model.NewCourse))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Admin == nil {
+				return nil, errors.New("directive admin is not implemented")
+			}
+			return ec.directives.Admin(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Member); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *CP_Discussion/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)

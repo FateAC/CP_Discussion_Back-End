@@ -15,13 +15,13 @@ var tokenErrs = []error{
 }
 
 type Claims struct {
-	userID string
+	UserID string
 	jwt.RegisteredClaims
 }
 
 func CreatToken(inUserID string) (string, error) {
 	claims := Claims{
-		userID: inUserID,
+		UserID: inUserID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(24) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
