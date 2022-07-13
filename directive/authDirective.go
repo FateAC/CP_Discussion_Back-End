@@ -2,6 +2,7 @@ package directive
 
 import (
 	"CP_Discussion/auth"
+	"CP_Discussion/database"
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -25,12 +26,11 @@ func AdminDirective(ctx context.Context, _ interface{}, next graphql.Resolver) (
 			Message: "Access Denied",
 		}
 	}
-	// member, err := database.DBConnect.FindMemberById(claims.UserID)
-	// log.Debug.Println(member)
-	// if err != nil || !member.IsAdmin {
-	// 	return nil, &gqlerror.Error{
-	// 		Message: "Access Denied",
-	// 	}
-	// }
+	member, err := database.DBConnect.FindMemberById(claims.UserID)
+	if err != nil || !member.IsAdmin {
+		return nil, &gqlerror.Error{
+			Message: "Access Denied",
+		}
+	}
 	return next(ctx)
 }
