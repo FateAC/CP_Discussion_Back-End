@@ -22,6 +22,8 @@ func main() {
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowCredentials: true,
+		AllowedMethods:   []string{"POST", "GET", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 	})
 
 	port := os.Getenv("PORT")
@@ -36,11 +38,9 @@ func main() {
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(conf))
 
 	router := mux.NewRouter()
-	router.Use(mux.CORSMethodMiddleware(router))
 	router.Use(middleware.AuthMiddleware)
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", c.Handler(srv))
-	router.Methods(http.MethodGet, http.MethodPost)
 
 	log.Info.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Error.Fatal(http.ListenAndServe(":"+port, router))
