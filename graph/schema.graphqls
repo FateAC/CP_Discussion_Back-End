@@ -71,4 +71,5 @@ type Mutation{
 type Query {
   member(_id: String!): Member!
   members: [Member!]!
+  isAdmin: Boolean! @auth
 }

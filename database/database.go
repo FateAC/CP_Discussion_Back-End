@@ -198,3 +198,9 @@ func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Membe
 	}
 	return &member, nil
 }
+
+func (db *DB) MemberIsAdmin(id string) bool {
+	member, err := db.FindMemberById(id)
+	// no error and member is admin
+	return err == nil && member.IsAdmin
+}
