@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
 	"CP_Discussion/directive"
@@ -12,36 +11,46 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
+	"github.com/gin-gonic/gin"
 )
 
 const defaultPort = "8080"
 
-func main() {
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
-		AllowCredentials: true,
-		AllowedMethods:   []string{"POST", "GET", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
-	})
+// Defining the Playground handler
+func playgroundHandler() gin.HandlerFunc {
+	h := playground.Handler("GraphQL", "/query")
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
+	return func(c *gin.Context) {
+		h.ServeHTTP(c.Writer, c.Request)
 	}
+}
 
+func graphqlHandler() gin.HandlerFunc {
+	// NewExecutableSchema and Config are in the generated.go file
+	// Resolver is in the resolver.go file
 	conf := generated.Config{Resolvers: &graph.Resolver{}}
 	conf.Directives.Auth = directive.AuthDirective
 	conf.Directives.Admin = directive.AdminDirective
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(conf))
 
-	router := mux.NewRouter()
-	router.Use(middleware.AuthMiddleware)
-	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", c.Handler(srv))
+	return func(c *gin.Context) {
+		srv.ServeHTTP(c.Writer, c.Request)
+	}
+}
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
+
+	router := gin.Default()
+	router.SetTrustedProxies([]string{"localhost"})
+	router.Use(middleware.AuthMiddleware())
+	router.GET("/", playgroundHandler())
+	router.POST("/query", graphqlHandler())
 
 	log.Info.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Error.Fatal(http.ListenAndServe(":"+port, router))
+	log.Error.Fatal(router.Run(":" + port))
 }

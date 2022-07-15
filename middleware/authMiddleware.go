@@ -4,13 +4,22 @@ import (
 	"CP_Discussion/auth"
 	"context"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		w, r := c.Writer, c.Request
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+
 		token := r.Header.Get("Authorization")
 		if token == "" {
-			next.ServeHTTP(w, r)
+			c.Status(http.StatusOK)
+			c.Next()
 			return
 		}
 		bearer := "Bearer "
@@ -18,12 +27,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		claims, err := auth.ParseToken(token)
 		if err != nil {
-			http.Error(w, "Invalid token", http.StatusForbidden)
+			c.Status(http.StatusForbidden)
 			return
 		}
 		ctx := context.WithValue(r.Context(), string("auth"), claims)
 
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
+		c.Request = r.WithContext(ctx)
+		c.Next()
+	}
 }
