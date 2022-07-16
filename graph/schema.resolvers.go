@@ -4,11 +4,11 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	"CP_Discussion/auth"
 	"CP_Discussion/database"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/graph/model"
 	"context"
+	"errors"
 )
 
 // CreateMember is the resolver for the createMember field.
@@ -43,8 +43,11 @@ func (r *queryResolver) Members(ctx context.Context) ([]*model.Member, error) {
 
 // IsAdmin is the resolver for the isAdmin field.
 func (r *queryResolver) IsAdmin(ctx context.Context) (bool, error) {
-	claims, _ := ctx.Value(string("auth")).(*auth.Claims)
-	return database.DBConnect.MemberIsAdmin(claims.UserID), nil
+	id, ok := ctx.Value(string("UserID")).(string)
+	if !ok {
+		return false, errors.New("failed to get user id from ctx")
+	}
+	return database.DBConnect.MemberIsAdmin(id), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
