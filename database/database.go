@@ -23,10 +23,10 @@ type DB struct {
 var DBConnect = Connect(
 	fmt.Sprintf(
 		"mongodb://%s:%s@%s:%s/",
-		env.DBUsername,
-		env.DBPassword,
-		env.DBUrl,
-		env.DBPort,
+		env.DBInfo["DBUsername"],
+		env.DBInfo["DBPassword"],
+		env.DBInfo["DBUrl"],
+		env.DBInfo["DBPort"],
 	),
 )
 
@@ -58,7 +58,7 @@ func Connect(dbUrl string) *DB {
 }
 
 func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
-	memberColl := db.client.Database(env.DBName).Collection("member")
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	res, err := memberColl.InsertOne(ctx, input)
@@ -85,7 +85,7 @@ func (db *DB) FindMemberById(id string) (*model.Member, error) {
 		return nil, err
 	}
 	member := model.Member{}
-	memberColl := db.client.Database(env.DBName).Collection("member")
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	err = memberColl.FindOne(ctx, bson.M{"_id": ObjectID}).Decode(&member)
@@ -97,7 +97,7 @@ func (db *DB) FindMemberById(id string) (*model.Member, error) {
 }
 
 func (db *DB) AllMember() ([]*model.Member, error) {
-	memberColl := db.client.Database(env.DBName).Collection("member")
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	cur, err := memberColl.Find(ctx, bson.D{})
@@ -117,7 +117,7 @@ func (db *DB) AllMember() ([]*model.Member, error) {
 func (db *DB) LoginCheck(input model.Login) *model.Auth {
 	email := input.Email
 	password := input.Password
-	memberColl := db.client.Database(env.DBName).Collection("member")
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	resAuth := model.Auth{
@@ -136,8 +136,8 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 	token, err := auth.CreatToken(member.ID)
 	if err != nil {
 		log.Warning.Print(err)
-			return &resAuth
-		}
+		return &resAuth
+	}
 	resAuth = model.Auth{
 		State: true,
 		Token: token,
@@ -159,7 +159,7 @@ func parseCourses(courses []*model.NewCourse) []*model.Course {
 
 func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
 	ObjectID, err := primitive.ObjectIDFromHex(id)
-	memberColl := db.client.Database(env.DBName).Collection("member")
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	course := parseCourse(&input)
@@ -180,7 +180,7 @@ func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, 
 
 func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
 	ObjectID, err := primitive.ObjectIDFromHex(id)
-	memberColl := db.client.Database(env.DBName).Collection("member")
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	course := parseCourse(&input)
