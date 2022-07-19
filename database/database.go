@@ -61,6 +61,10 @@ func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+	if db.CheckEmailExist(input) {
+		log.Warning.Print("Email has already existed.")
+		return nil, fmt.Errorf("emailExisted")
+	}
 	res, err := memberColl.InsertOne(ctx, input)
 	if err != nil {
 		log.Warning.Print(err)
@@ -76,6 +80,15 @@ func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
 		AvatarPath: input.AvatarPath,
 		Courses:    parseCourses(input.Courses),
 	}, nil
+}
+
+func (db *DB) CheckEmailExist(input model.NewMember) bool {
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	member := model.Member{}
+	err := memberColl.FindOne(ctx, bson.M{"email": input.Email}).Decode(&member)
+	return err == nil
 }
 
 func (db *DB) FindMemberById(id string) (*model.Member, error) {
