@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type DB struct {
@@ -127,6 +128,11 @@ func (db *DB) AllMember() ([]*model.Member, error) {
 	return members, nil
 }
 
+func comparePWD(DBPWD string, LoginPWD string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(DBPWD), []byte(LoginPWD))
+	return err == nil
+}
+
 func (db *DB) LoginCheck(input model.Login) *model.Auth {
 	email := input.Email
 	password := input.Password
@@ -143,17 +149,16 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 		log.Warning.Print(err)
 		return &resAuth
 	}
-	if member.Password != password {
-		return &resAuth
-	}
-	token, err := auth.CreatToken(member.ID)
-	if err != nil {
-		log.Warning.Print(err)
-		return &resAuth
-	}
-	resAuth = model.Auth{
-		State: true,
-		Token: token,
+	if comparePWD(member.Password, password) {
+		token, err := auth.CreatToken(member.ID)
+		if err != nil {
+			log.Warning.Print(err)
+			return &resAuth
+		}
+		resAuth = model.Auth{
+			State: true,
+			Token: token,
+		}
 	}
 	return &resAuth
 }
