@@ -177,6 +177,10 @@ func parseCourses(courses []*model.NewCourse) []*model.Course {
 
 func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
 	ObjectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -198,6 +202,10 @@ func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, 
 
 func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
 	ObjectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

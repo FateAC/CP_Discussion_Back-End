@@ -3,6 +3,7 @@ package directive
 import (
 	"CP_Discussion/auth"
 	"CP_Discussion/database"
+	"CP_Discussion/log"
 	"context"
 	"errors"
 
@@ -11,7 +12,8 @@ import (
 )
 
 func parseContextClaims(ctx context.Context) (*auth.Claims, error) {
-	token, ok := ctx.Value(string("token")).(string)
+	token, ok := ctx.Value("token").(string)
+	log.Debug.Println(token)
 	if !ok || token == "" {
 		return nil, errors.New("no token provided")
 	}
@@ -31,7 +33,7 @@ func AuthDirective(ctx context.Context, _ interface{}, next graphql.Resolver) (i
 			Message: "Access Denied: " + err.Error(),
 		}
 	}
-	ctx = context.WithValue(ctx, string("UserID"), claims.UserID)
+	ctx = context.WithValue(ctx, "UserID", claims.UserID)
 	return next(ctx)
 }
 
@@ -42,7 +44,7 @@ func AdminDirective(ctx context.Context, _ interface{}, next graphql.Resolver) (
 			Message: "Access Denied: " + err.Error(),
 		}
 	}
-	ctx = context.WithValue(ctx, string("UserID"), claims.UserID)
+	ctx = context.WithValue(ctx, "UserID", claims.UserID)
 	isAdmin := database.DBConnect.MemberIsAdmin(claims.UserID)
 	if isAdmin {
 		return nil, &gqlerror.Error{
