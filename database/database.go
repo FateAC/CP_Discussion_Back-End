@@ -222,3 +222,65 @@ func (db *DB) MemberIsAdmin(id string) bool {
 	// no error and member is admin
 	return err == nil && member.IsAdmin
 }
+
+func (db *DB) InsertPost(input model.NewPost) (*model.Post, error) {
+	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	res, err := postColl.InsertOne(ctx, input)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	ObjectID := res.InsertedID.(primitive.ObjectID)
+	filter := bson.M{"_id": ObjectID}
+	update := bson.M{
+		"$set": bson.M{
+			"createTime":     time.Now(),
+			"lastModifyTime": time.Now(),
+		},
+	}
+	after := options.After
+	opts := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	post := model.Post{}
+	postColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&post)
+	return &post, nil
+}
+
+func (db *DB) DeletePost(id string) (*model.Post, error) {
+	ObjectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	post := model.Post{}
+	err = postColl.FindOneAndDelete(ctx, bson.M{"_id": ObjectID}).Decode(&post)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return &post, nil
+}
+
+func (db *DB) AllPost() ([]*model.Post, error) {
+	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	cur, err := postColl.Find(ctx, bson.D{})
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	var posts []*model.Post
+	err = cur.All(ctx, &posts)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return posts, nil
+}

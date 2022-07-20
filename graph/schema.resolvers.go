@@ -31,6 +31,16 @@ func (r *mutationResolver) RemoveMemberCourse(ctx context.Context, id string, co
 	return database.DBConnect.RemoveMemberCourse(id, course)
 }
 
+// AddPost is the resolver for the addPost field.
+func (r *mutationResolver) AddPost(ctx context.Context, input model.NewPost) (*model.Post, error) {
+	return database.DBConnect.InsertPost(input)
+}
+
+// RemovePost is the resolver for the removePost field.
+func (r *mutationResolver) RemovePost(ctx context.Context, id string) (*model.Post, error) {
+	return database.DBConnect.DeletePost(id)
+}
+
 // Member is the resolver for the member field.
 func (r *queryResolver) Member(ctx context.Context, id string) (*model.Member, error) {
 	return database.DBConnect.FindMemberById(id)
@@ -48,6 +58,11 @@ func (r *queryResolver) IsAdmin(ctx context.Context) (bool, error) {
 		return false, errors.New("failed to get user id from ctx")
 	}
 	return database.DBConnect.MemberIsAdmin(id), nil
+}
+
+// Posts is the resolver for the posts field.
+func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
+	return database.DBConnect.AllPost()
 }
 
 // Mutation returns generated.MutationResolver implementation.

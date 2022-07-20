@@ -61,15 +61,33 @@ input NewComment {
   subLevel: Int!
 }
 
+type Post {
+  _id: ID!
+  title: String!
+  tags: [String!]!
+  mdPath: String!
+  createTime: Time!
+  lastModifyTime: Time!
+}
+
+input NewPost {
+  title: String!
+  tags: [String!]!
+  mdPath: String!
+}
+
 type Mutation{
   createMember (input: NewMember!): Member!
   loginCheck(input: Login!): Auth!
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
+  addPost(input: NewPost!): Post!
+  removePost(id: String!): Post!
 }
 
 type Query {
   member(_id: String!): Member!
   members: [Member!]!
   isAdmin: Boolean! @auth
+  posts: [Post!]!
 }

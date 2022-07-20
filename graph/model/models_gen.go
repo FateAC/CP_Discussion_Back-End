@@ -59,3 +59,18 @@ type NewMember struct {
 	AvatarPath string       `json:"avatarPath" bson:"avatarPath"`
 	Courses    []*NewCourse `json:"courses" bson:"courses"`
 }
+
+type NewPost struct {
+	Title  string   `json:"title" bson:"title"`
+	Tags   []string `json:"tags" bson:"tags"`
+	MdPath string   `json:"mdPath" bson:"mdPath"`
+}
+
+type Post struct {
+	ID             string    `json:"_id" bson:"_id"`
+	Title          string    `json:"title" bson:"title"`
+	Tags           []string  `json:"tags" bson:"tags"`
+	MdPath         string    `json:"mdPath" bson:"mdPath"`
+	CreateTime     time.Time `json:"createTime" bson:"createTime"`
+	LastModifyTime time.Time `json:"lastModifyTime" bson:"lastModifyTime"`
+}
