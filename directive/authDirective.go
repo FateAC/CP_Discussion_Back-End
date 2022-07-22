@@ -46,7 +46,7 @@ func AdminDirective(ctx context.Context, _ interface{}, next graphql.Resolver) (
 	}
 	ctx = context.WithValue(ctx, "UserID", claims.UserID)
 	isAdmin := database.DBConnect.MemberIsAdmin(claims.UserID)
-	if isAdmin {
+	if !isAdmin {
 		return nil, &gqlerror.Error{
 			Message: "Access Denied: member is not a admin",
 		}
