@@ -78,6 +78,7 @@ input NewPost {
 
 type Mutation{
   createMember (input: NewMember!): Member!
+  removeMember (id: String!): Member!
   loginCheck(input: Login!): Auth!
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin

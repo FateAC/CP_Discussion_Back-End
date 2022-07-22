@@ -83,6 +83,24 @@ func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
 	}, nil
 }
 
+func (db *DB) DeleteMember(id string) (*model.Member, error) {
+	ObjectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	member := model.Member{}
+	err = memberColl.FindOneAndDelete(ctx, bson.M{"_id": ObjectID}).Decode(&member)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return &member, nil
+}
+
 func (db *DB) CheckEmailExist(input model.NewMember) bool {
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

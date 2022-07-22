@@ -16,6 +16,11 @@ func (r *mutationResolver) CreateMember(ctx context.Context, input model.NewMemb
 	return database.DBConnect.InsertMember(input)
 }
 
+// RemoveMember is the resolver for the removeMember field.
+func (r *mutationResolver) RemoveMember(ctx context.Context, id string) (*model.Member, error) {
+	return database.DBConnect.DeleteMember(id)
+}
+
 // LoginCheck is the resolver for the loginCheck field.
 func (r *mutationResolver) LoginCheck(ctx context.Context, input model.Login) (*model.Auth, error) {
 	return database.DBConnect.LoginCheck(input), nil
