@@ -76,6 +76,11 @@ input NewPost {
   mdPath: String!
 }
 
+input NewPWD {
+  id: String!
+  password: String!
+}
+
 type Mutation{
   createMember (input: NewMember!): Member!
   removeMember (id: String!): Member!
@@ -84,6 +89,7 @@ type Mutation{
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
+  resetPWD(input: NewPWD!): Member!
 }
 
 type Query {

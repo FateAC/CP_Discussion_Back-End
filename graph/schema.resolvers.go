@@ -46,6 +46,11 @@ func (r *mutationResolver) RemovePost(ctx context.Context, id string) (*model.Po
 	return database.DBConnect.DeletePost(id)
 }
 
+// ResetPwd is the resolver for the resetPWD field.
+func (r *mutationResolver) ResetPwd(ctx context.Context, input model.NewPwd) (*model.Member, error) {
+	return database.DBConnect.ResetPassword(input)
+}
+
 // Member is the resolver for the member field.
 func (r *queryResolver) Member(ctx context.Context, id string) (*model.Member, error) {
 	return database.DBConnect.FindMemberById(id)

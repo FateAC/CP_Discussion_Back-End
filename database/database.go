@@ -293,6 +293,31 @@ func (db *DB) DeletePost(id string) (*model.Post, error) {
 	return &post, nil
 }
 
+func (db *DB) ResetPassword(input model.NewPwd) (*model.Member, error) {
+	ObjectID, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	password := input.Password
+	filter := bson.M{"_id": ObjectID}
+	update := bson.M{"$set": bson.M{"password": password}}
+	after := options.After
+	opts := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	member := model.Member{}
+	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return &member, nil
+}
+
 func (db *DB) AllPost() ([]*model.Post, error) {
 	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

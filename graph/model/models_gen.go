@@ -60,6 +60,11 @@ type NewMember struct {
 	Courses    []*NewCourse `json:"courses" bson:"courses"`
 }
 
+type NewPwd struct {
+	ID       string `json:"id" bson:"id"`
+	Password string `json:"password" bson:"password"`
+}
+
 type NewPost struct {
 	Title  string   `json:"title" bson:"title"`
 	Tags   []string `json:"tags" bson:"tags"`

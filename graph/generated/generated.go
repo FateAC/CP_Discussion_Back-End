@@ -83,6 +83,7 @@ type ComplexityRoot struct {
 		RemoveMember       func(childComplexity int, id string) int
 		RemoveMemberCourse func(childComplexity int, id string, course model.NewCourse) int
 		RemovePost         func(childComplexity int, id string) int
+		ResetPwd           func(childComplexity int, input model.NewPwd) int
 	}
 
 	Post struct {
@@ -110,6 +111,7 @@ type MutationResolver interface {
 	RemoveMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error)
 	AddPost(ctx context.Context, input model.NewPost) (*model.Post, error)
 	RemovePost(ctx context.Context, id string) (*model.Post, error)
+	ResetPwd(ctx context.Context, input model.NewPwd) (*model.Member, error)
 }
 type QueryResolver interface {
 	Member(ctx context.Context, id string) (*model.Member, error)
@@ -329,6 +331,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RemovePost(childComplexity, args["id"].(string)), true
 
+	case "Mutation.resetPWD":
+		if e.complexity.Mutation.ResetPwd == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resetPWD_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ResetPwd(childComplexity, args["input"].(model.NewPwd)), true
+
 	case "Post.createTime":
 		if e.complexity.Post.CreateTime == nil {
 			break
@@ -416,6 +430,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNewComment,
 		ec.unmarshalInputNewCourse,
 		ec.unmarshalInputNewMember,
+		ec.unmarshalInputNewPWD,
 		ec.unmarshalInputNewPost,
 	)
 	first := true
@@ -555,6 +570,11 @@ input NewPost {
   mdPath: String!
 }
 
+input NewPWD {
+  id: String!
+  password: String!
+}
+
 type Mutation{
   createMember (input: NewMember!): Member!
   removeMember (id: String!): Member!
@@ -563,6 +583,7 @@ type Mutation{
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
+  resetPWD(input: NewPWD!): Member!
 }
 
 type Query {
@@ -699,6 +720,21 @@ func (ec *executionContext) field_Mutation_removePost_args(ctx context.Context, 
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_resetPWD_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewPwd
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewPWD2CP_DiscussionᚋgraphᚋmodelᚐNewPwd(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -2003,6 +2039,79 @@ func (ec *executionContext) fieldContext_Mutation_removePost(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_removePost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resetPWD(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_resetPWD(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ResetPwd(rctx, fc.Args["input"].(model.NewPwd))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Member)
+	fc.Result = res
+	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_resetPWD(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "_id":
+				return ec.fieldContext_Member__id(ctx, field)
+			case "email":
+				return ec.fieldContext_Member_email(ctx, field)
+			case "password":
+				return ec.fieldContext_Member_password(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_Member_isAdmin(ctx, field)
+			case "username":
+				return ec.fieldContext_Member_username(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Member_nickname(ctx, field)
+			case "avatarPath":
+				return ec.fieldContext_Member_avatarPath(ctx, field)
+			case "courses":
+				return ec.fieldContext_Member_courses(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_resetPWD_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -4624,6 +4733,42 @@ func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj int
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewPWD(ctx context.Context, obj interface{}) (model.NewPwd, error) {
+	var it model.NewPwd
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "password"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj interface{}) (model.NewPost, error) {
 	var it model.NewPost
 	asMap := map[string]interface{}{}
@@ -4949,6 +5094,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_removePost(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "resetPWD":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resetPWD(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -5685,6 +5839,11 @@ func (ec *executionContext) unmarshalNNewCourse2ᚖCP_Discussionᚋgraphᚋmodel
 
 func (ec *executionContext) unmarshalNNewMember2CP_DiscussionᚋgraphᚋmodelᚐNewMember(ctx context.Context, v interface{}) (model.NewMember, error) {
 	res, err := ec.unmarshalInputNewMember(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewPWD2CP_DiscussionᚋgraphᚋmodelᚐNewPwd(ctx context.Context, v interface{}) (model.NewPwd, error) {
+	res, err := ec.unmarshalInputNewPWD(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
