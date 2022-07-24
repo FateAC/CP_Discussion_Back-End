@@ -3,7 +3,6 @@ package env
 import (
 	"CP_Discussion/log"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -12,11 +11,7 @@ import (
 var DBInfo = getDBInfo()
 
 func getDBInfo() map[string]string {
-	const projectDirName = "CP_Discussion_Back-End"
-	projectName := regexp.MustCompile(`^(.*` + projectDirName + `)`)
-	currentWorkDirectory, _ := os.Getwd()
-	rootPath := projectName.Find([]byte(currentWorkDirectory))
-	err := godotenv.Load(string(rootPath) + `/.env`)
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Error.Fatal("Error loading .env file")
 	}
