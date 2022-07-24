@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"CP_Discussion/directive"
+	"CP_Discussion/fileHandler"
 	"CP_Discussion/graph"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/log"
@@ -50,6 +51,8 @@ func main() {
 	router.Use(middleware.AuthMiddleware())
 	router.GET("/", playgroundHandler())
 	router.POST("/query", graphqlHandler())
+	router.GET("/post/:year/:semester/:id", fileHandler.PostHandler())
+	router.GET("/avatar/:filename", fileHandler.AvatarHandler())
 
 	log.Info.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Error.Fatal(router.Run(":" + port))
