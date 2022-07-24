@@ -87,7 +87,7 @@ input SendResetPassword {
 }
 
 type Mutation{
-  createMember (input: NewMember!): Member!
+  createMember (input: NewMember!): Member! @admin
   removeMember (id: String!): Member! @admin
   loginCheck(input: Login!): Auth!
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
