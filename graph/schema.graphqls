@@ -6,6 +6,7 @@ directive @auth on FIELD_DEFINITION
 directive @admin on FIELD_DEFINITION
 
 scalar Time
+scalar Void
 
 type Member {
   _id: ID!
@@ -81,6 +82,10 @@ input NewPWD {
   password: String!
 }
 
+input SendResetPassword {
+  email: String!
+}
+
 type Mutation{
   createMember (input: NewMember!): Member!
   removeMember (id: String!): Member! @admin
@@ -90,6 +95,7 @@ type Mutation{
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
   resetPWD(input: NewPWD!): Member!
+  sendResetPWD(input: SendResetPassword!): Void
 }
 
 type Query {

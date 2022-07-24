@@ -1,10 +1,10 @@
 package database
 
 import (
-	"CP_Discussion/auth"
 	"CP_Discussion/env"
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
+	authToken "CP_Discussion/token"
 	"context"
 	"fmt"
 	"time"
@@ -62,7 +62,7 @@ func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	if db.CheckEmailExist(input) {
+	if db.CheckEmailExist(input.Email) {
 		log.Warning.Print("Email has already existed.")
 		return nil, fmt.Errorf("emailExisted")
 	}
@@ -101,12 +101,12 @@ func (db *DB) DeleteMember(id string) (*model.Member, error) {
 	return &member, nil
 }
 
-func (db *DB) CheckEmailExist(input model.NewMember) bool {
+func (db *DB) CheckEmailExist(input string) bool {
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	member := model.Member{}
-	err := memberColl.FindOne(ctx, bson.M{"email": input.Email}).Decode(&member)
+	err := memberColl.FindOne(ctx, bson.M{"email": input}).Decode(&member)
 	return err == nil
 }
 
@@ -168,7 +168,7 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 		return &resAuth
 	}
 	if comparePWD(member.Password, password) {
-		token, err := auth.CreatToken(member.ID)
+		token, err := authToken.CreatToken(member.ID)
 		if err != nil {
 			log.Warning.Print(err)
 			return &resAuth

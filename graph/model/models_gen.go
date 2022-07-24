@@ -79,3 +79,7 @@ type Post struct {
 	CreateTime     time.Time `json:"createTime" bson:"createTime"`
 	LastModifyTime time.Time `json:"lastModifyTime" bson:"lastModifyTime"`
 }
+
+type SendResetPassword struct {
+	Email string `json:"email" bson:"email"`
+}

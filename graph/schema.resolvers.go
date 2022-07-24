@@ -7,8 +7,13 @@ import (
 	"CP_Discussion/database"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/graph/model"
+	"CP_Discussion/log"
+	"CP_Discussion/mail"
+	"CP_Discussion/token"
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 // CreateMember is the resolver for the createMember field.
@@ -48,7 +53,47 @@ func (r *mutationResolver) RemovePost(ctx context.Context, id string) (*model.Po
 
 // ResetPwd is the resolver for the resetPWD field.
 func (r *mutationResolver) ResetPwd(ctx context.Context, input model.NewPwd) (*model.Member, error) {
+	member, err := database.DBConnect.ResetPassword(input)
+	if err != nil {
+		log.Error.Print(err)
+		return nil, err
+	}
+	err = mail.SendMail(
+		member.Email,
+		"密碼已被修改 (Your Password Has Been Reset)",
+		mail.ResetPWDSuccess(strings.Split(member.Email, "@")[0]),
+	)
+	if err != nil {
+		log.Error.Print(err)
+		return nil, err
+	}
+	log.Info.Println("Sent verify mail to " + member.Email)
 	return database.DBConnect.ResetPassword(input)
+}
+
+// SendResetPwd is the resolver for the sendResetPWD field.
+func (r *mutationResolver) SendResetPwd(ctx context.Context, input model.SendResetPassword) (*string, error) {
+	url := "https://localhost:3000/"
+	if !database.DBConnect.CheckEmailExist(input.Email) {
+		log.Warning.Print("Email is not existed.")
+		return nil, fmt.Errorf("emailIsNotExisted")
+	}
+	token, err := token.CreateResetPWDToken(input.Email)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	err = mail.SendMail(
+		input.Email,
+		"重設密碼 (Reset Password)",
+		mail.ResetPWDContent(strings.Split(input.Email, "@")[0], token, url),
+	)
+	if err != nil {
+		log.Error.Print(err)
+		return nil, err
+	}
+	log.Info.Println("Sent ResetPWD mail to " + input.Email)
+	return nil, nil
 }
 
 // Member is the resolver for the member field.
