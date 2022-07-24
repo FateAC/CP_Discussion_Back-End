@@ -83,7 +83,7 @@ input NewPWD {
 
 type Mutation{
   createMember (input: NewMember!): Member!
-  removeMember (id: String!): Member!
+  removeMember (id: String!): Member! @admin
   loginCheck(input: Login!): Auth!
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
