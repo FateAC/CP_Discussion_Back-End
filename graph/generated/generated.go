@@ -97,10 +97,11 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		IsAdmin func(childComplexity int) int
-		Member  func(childComplexity int, id string) int
-		Members func(childComplexity int) int
-		Posts   func(childComplexity int) int
+		IsAdmin  func(childComplexity int) int
+		Member   func(childComplexity int, id string) int
+		Members  func(childComplexity int) int
+		Posts    func(childComplexity int) int
+		SelfInfo func(childComplexity int) int
 	}
 }
 
@@ -116,6 +117,7 @@ type MutationResolver interface {
 	SendResetPwd(ctx context.Context, input model.SendResetPassword) (*string, error)
 }
 type QueryResolver interface {
+	SelfInfo(ctx context.Context) (*model.Member, error)
 	Member(ctx context.Context, id string) (*model.Member, error)
 	Members(ctx context.Context) ([]*model.Member, error)
 	IsAdmin(ctx context.Context) (bool, error)
@@ -432,6 +434,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Posts(childComplexity), true
 
+	case "Query.selfInfo":
+		if e.complexity.Query.SelfInfo == nil {
+			break
+		}
+
+		return e.complexity.Query.SelfInfo(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -596,7 +605,7 @@ input SendResetPassword {
 }
 
 type Mutation{
-  createMember (input: NewMember!): Member!
+  createMember (input: NewMember!): Member! @admin
   removeMember (id: String!): Member! @admin
   loginCheck(input: Login!): Auth!
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
@@ -608,6 +617,7 @@ type Mutation{
 }
 
 type Query {
+  selfInfo: Member! @auth
   member(_id: String!): Member!
   members: [Member!]!
   isAdmin: Boolean! @auth
@@ -1563,8 +1573,28 @@ func (ec *executionContext) _Mutation_createMember(ctx context.Context, field gr
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateMember(rctx, fc.Args["input"].(model.NewMember))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateMember(rctx, fc.Args["input"].(model.NewMember))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Admin == nil {
+				return nil, errors.New("directive admin is not implemented")
+			}
+			return ec.directives.Admin(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Member); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *CP_Discussion/graph/model.Member`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2485,6 +2515,88 @@ func (ec *executionContext) fieldContext_Post_lastModifyTime(ctx context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_selfInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_selfInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().SelfInfo(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Member); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *CP_Discussion/graph/model.Member`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Member)
+	fc.Result = res
+	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_selfInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "_id":
+				return ec.fieldContext_Member__id(ctx, field)
+			case "email":
+				return ec.fieldContext_Member_email(ctx, field)
+			case "password":
+				return ec.fieldContext_Member_password(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_Member_isAdmin(ctx, field)
+			case "username":
+				return ec.fieldContext_Member_username(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Member_nickname(ctx, field)
+			case "avatarPath":
+				return ec.fieldContext_Member_avatarPath(ctx, field)
+			case "courses":
+				return ec.fieldContext_Member_courses(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
 		},
 	}
 	return fc, nil
@@ -5343,6 +5455,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "selfInfo":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_selfInfo(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "member":
 			field := field
 

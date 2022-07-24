@@ -96,6 +96,15 @@ func (r *mutationResolver) SendResetPwd(ctx context.Context, input model.SendRes
 	return nil, nil
 }
 
+// SelfInfo is the resolver for the selfInfo field.
+func (r *queryResolver) SelfInfo(ctx context.Context) (*model.Member, error) {
+	id, ok := ctx.Value(string("UserID")).(string)
+	if !ok {
+		return nil, errors.New("failed to get user id from ctx")
+	}
+	return database.DBConnect.FindMemberById(id)
+}
+
 // Member is the resolver for the member field.
 func (r *queryResolver) Member(ctx context.Context, id string) (*model.Member, error) {
 	return database.DBConnect.FindMemberById(id)

@@ -99,6 +99,7 @@ type Mutation{
 }
 
 type Query {
+  selfInfo: Member! @auth
   member(_id: String!): Member!
   members: [Member!]!
   isAdmin: Boolean! @auth
