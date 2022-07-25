@@ -2,14 +2,19 @@ package database
 
 import (
 	"CP_Discussion/env"
+	"CP_Discussion/fileHandler"
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
 	authToken "CP_Discussion/token"
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -254,6 +259,45 @@ func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Membe
 		return nil, err
 	}
 	return &member, nil
+}
+
+func (db *DB) UpdateMemberAvatar(id string, avatar *graphql.Upload) (bool, error) {
+	if avatar == nil {
+		return true, nil
+	}
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	filename := objectID.Hex() + "." + strings.Split(avatar.ContentType, "/")[1]
+	filepath := filepath.Join(fileHandler.AvatarPath, filename)
+	log.Debug.Printf("save avatar: %s\n", filepath)
+	fo, err := os.Create(filepath)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	_, err = io.Copy(fo, avatar.File)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	err = fo.Close()
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	update := bson.M{"$set": bson.M{"avatarPath": filepath}}
+	_, err = memberColl.UpdateByID(ctx, objectID, update)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	return true, nil
 }
 
 func (db *DB) MemberIsAdmin(id string) bool {

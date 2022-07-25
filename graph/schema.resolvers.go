@@ -14,6 +14,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 // CreateMember is the resolver for the createMember field.
@@ -39,6 +41,15 @@ func (r *mutationResolver) AddMemberCourse(ctx context.Context, id string, cours
 // RemoveMemberCourse is the resolver for the removeMemberCourse field.
 func (r *mutationResolver) RemoveMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error) {
 	return database.DBConnect.RemoveMemberCourse(id, course)
+}
+
+// UpdateMemberAvatar is the resolver for the updateMemberAvatar field.
+func (r *mutationResolver) UpdateMemberAvatar(ctx context.Context, avatar *graphql.Upload) (bool, error) {
+	id, ok := ctx.Value(string("UserID")).(string)
+	if !ok {
+		return false, errors.New("failed to get user id from ctx")
+	}
+	return database.DBConnect.UpdateMemberAvatar(id, avatar)
 }
 
 // AddPost is the resolver for the addPost field.
