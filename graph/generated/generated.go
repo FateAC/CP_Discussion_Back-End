@@ -76,16 +76,17 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddMemberCourse    func(childComplexity int, id string, course model.NewCourse) int
-		AddPost            func(childComplexity int, input model.NewPost) int
-		CreateMember       func(childComplexity int, input model.NewMember) int
-		LoginCheck         func(childComplexity int, input model.Login) int
-		RemoveMember       func(childComplexity int, id string) int
-		RemoveMemberCourse func(childComplexity int, id string, course model.NewCourse) int
-		RemovePost         func(childComplexity int, id string) int
-		ResetPwd           func(childComplexity int, input model.NewPwd) int
-		SendResetPwd       func(childComplexity int, input model.SendResetPassword) int
-		UpdateMemberAvatar func(childComplexity int, avatar *graphql.Upload) int
+		AddMemberCourse      func(childComplexity int, id string, course model.NewCourse) int
+		AddPost              func(childComplexity int, input model.NewPost) int
+		CreateMember         func(childComplexity int, input model.NewMember) int
+		LoginCheck           func(childComplexity int, input model.Login) int
+		RemoveMember         func(childComplexity int, id string) int
+		RemoveMemberCourse   func(childComplexity int, id string, course model.NewCourse) int
+		RemovePost           func(childComplexity int, id string) int
+		ResetPwd             func(childComplexity int, input model.NewPwd) int
+		SendResetPwd         func(childComplexity int, input model.SendResetPassword) int
+		UpdateMemberAvatar   func(childComplexity int, avatar *graphql.Upload) int
+		UpdateMemberNickname func(childComplexity int, nickname *string) int
 	}
 
 	Post struct {
@@ -113,6 +114,7 @@ type MutationResolver interface {
 	AddMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error)
 	RemoveMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error)
 	UpdateMemberAvatar(ctx context.Context, avatar *graphql.Upload) (bool, error)
+	UpdateMemberNickname(ctx context.Context, nickname *string) (bool, error)
 	AddPost(ctx context.Context, input model.NewPost) (*model.Post, error)
 	RemovePost(ctx context.Context, id string) (*model.Post, error)
 	ResetPwd(ctx context.Context, input model.NewPwd) (*model.Member, error)
@@ -373,6 +375,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateMemberAvatar(childComplexity, args["avatar"].(*graphql.Upload)), true
 
+	case "Mutation.updateMemberNickname":
+		if e.complexity.Mutation.UpdateMemberNickname == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateMemberNickname_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateMemberNickname(childComplexity, args["nickname"].(*string)), true
+
 	case "Post.createTime":
 		if e.complexity.Post.CreateTime == nil {
 			break
@@ -623,6 +637,7 @@ type Mutation{
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
   updateMemberAvatar(avatar: Upload): Boolean! @auth
+  updateMemberNickname(nickname: String): Boolean! @auth
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
   resetPWD(input: NewPWD!): Member!
@@ -809,6 +824,21 @@ func (ec *executionContext) field_Mutation_updateMemberAvatar_args(ctx context.C
 		}
 	}
 	args["avatar"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateMemberNickname_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["nickname"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nickname"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["nickname"] = arg0
 	return args, nil
 }
 
@@ -2090,6 +2120,81 @@ func (ec *executionContext) fieldContext_Mutation_updateMemberAvatar(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateMemberAvatar_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateMemberNickname(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateMemberNickname(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpdateMemberNickname(rctx, fc.Args["nickname"].(*string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateMemberNickname(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateMemberNickname_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -5412,6 +5517,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateMemberAvatar(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateMemberNickname":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateMemberNickname(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {

@@ -52,6 +52,15 @@ func (r *mutationResolver) UpdateMemberAvatar(ctx context.Context, avatar *graph
 	return database.DBConnect.UpdateMemberAvatar(id, avatar)
 }
 
+// UpdateMemberNickname is the resolver for the updateMemberNickname field.
+func (r *mutationResolver) UpdateMemberNickname(ctx context.Context, nickname *string) (bool, error) {
+	id, ok := ctx.Value(string("UserID")).(string)
+	if !ok {
+		return false, errors.New("failed to get user id from ctx")
+	}
+	return database.DBConnect.UpdateMemberNickname(id, nickname)
+}
+
 // AddPost is the resolver for the addPost field.
 func (r *mutationResolver) AddPost(ctx context.Context, input model.NewPost) (*model.Post, error) {
 	return database.DBConnect.InsertPost(input)
