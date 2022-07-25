@@ -51,13 +51,10 @@ type NewCourse struct {
 }
 
 type NewMember struct {
-	Email      string       `json:"email" bson:"email"`
-	Password   string       `json:"password" bson:"password"`
-	IsAdmin    bool         `json:"isAdmin" bson:"isAdmin"`
-	Username   string       `json:"username" bson:"username"`
-	Nickname   string       `json:"nickname" bson:"nickname"`
-	AvatarPath string       `json:"avatarPath" bson:"avatarPath"`
-	Courses    []*NewCourse `json:"courses" bson:"courses"`
+	Email    string       `json:"email" bson:"email"`
+	Password string       `json:"password" bson:"password"`
+	IsAdmin  bool         `json:"isAdmin" bson:"isAdmin"`
+	Courses  []*NewCourse `json:"courses" bson:"courses"`
 }
 
 type NewPwd struct {

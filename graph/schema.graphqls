@@ -28,9 +28,6 @@ input NewMember {
   email: String!
   password: String!
   isAdmin: Boolean!
-  username: String!
-  nickname: String!
-  avatarPath: String!
   courses: [NewCourse!]!
 }
 

@@ -7,6 +7,7 @@ import (
 	authToken "CP_Discussion/token"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -66,21 +67,33 @@ func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
 		log.Warning.Print("Email has already existed.")
 		return nil, fmt.Errorf("emailExisted")
 	}
-	res, err := memberColl.InsertOne(ctx, input)
+	username := strings.Split(input.Email, "@")[0]
+	res, err := memberColl.InsertOne(
+		ctx,
+		struct {
+			Email      string
+			Password   string
+			IsAdmin    bool
+			Username   string
+			Nickname   string
+			AvatarPath string
+			Courses    []*model.Course
+		}{
+			Email:      input.Email,
+			Password:   input.Password,
+			IsAdmin:    input.IsAdmin,
+			Username:   username,
+			Nickname:   username,
+			AvatarPath: "",
+			Courses:    parseCourses(input.Courses),
+		},
+	)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
 	}
-	return &model.Member{
-		ID:         res.InsertedID.(primitive.ObjectID).Hex(),
-		Email:      input.Email,
-		Password:   input.Password,
-		IsAdmin:    input.IsAdmin,
-		Username:   input.Username,
-		Nickname:   input.Nickname,
-		AvatarPath: input.AvatarPath,
-		Courses:    parseCourses(input.Courses),
-	}, nil
+	objectID := res.InsertedID.(primitive.ObjectID)
+	return db.FindMemberById(objectID.Hex())
 }
 
 func (db *DB) DeleteMember(id string) (*model.Member, error) {

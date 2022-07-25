@@ -546,9 +546,6 @@ input NewMember {
   email: String!
   password: String!
   isAdmin: Boolean!
-  username: String!
-  nickname: String!
-  avatarPath: String!
   courses: [NewCourse!]!
 }
 
@@ -4884,7 +4881,7 @@ func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"email", "password", "isAdmin", "username", "nickname", "avatarPath", "courses"}
+	fieldsInOrder := [...]string{"email", "password", "isAdmin", "courses"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4912,30 +4909,6 @@ func (ec *executionContext) unmarshalInputNewMember(ctx context.Context, obj int
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isAdmin"))
 			it.IsAdmin, err = ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "username":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-			it.Username, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "nickname":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nickname"))
-			it.Nickname, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "avatarPath":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("avatarPath"))
-			it.AvatarPath, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
