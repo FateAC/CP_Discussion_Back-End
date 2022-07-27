@@ -126,6 +126,11 @@ func (r *mutationResolver) SendResetPwd(ctx context.Context, email string) (*str
 	return nil, nil
 }
 
+// UpdateMemberIsAdmin is the resolver for the updateMemberIsAdmin field.
+func (r *mutationResolver) UpdateMemberIsAdmin(ctx context.Context, id string) (bool, error) {
+	return database.DBConnect.UpdateMemberIsAdmin(id)
+}
+
 // SelfInfo is the resolver for the selfInfo field.
 func (r *queryResolver) SelfInfo(ctx context.Context) (*model.Member, error) {
 	id, ok := ctx.Value(string("UserID")).(string)

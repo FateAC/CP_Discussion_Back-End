@@ -449,3 +449,25 @@ func (db *DB) FindMemberByEmail(email string) (*model.Member, error) {
 	}
 	return &member, nil
 }
+
+func (db *DB) UpdateMemberIsAdmin(id string) (bool, error) {
+	ObjectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	changeAdmin := !db.MemberIsAdmin(id)
+	filter := bson.M{"_id": ObjectID}
+	update := bson.M{"$set": bson.M{"isAdmin": changeAdmin}}
+	log.Info.Println("change admin!!!")
+	_, err = memberColl.UpdateOne(ctx, filter, update)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	log.Info.Println("change admin")
+	return true, nil
+}

@@ -96,6 +96,7 @@ type Mutation{
   removePost(id: String!): Post!
   resetPWD(password: String!): Boolean! @auth
   sendResetPWD(email: String!): Void
+  updateMemberIsAdmin(id: String!): Boolean! @admin
 }
 
 type Query {
