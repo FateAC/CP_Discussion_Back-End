@@ -24,6 +24,21 @@ func getDBInfo() map[string]string {
 	return ret
 }
 
+var SmtpInfo = getSmtpInfo()
+
+func getSmtpInfo() map[string]string {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Error.Fatal("Error loading .env file")
+	}
+	ret := make(map[string]string)
+	ret["smtpServer"] = os.Getenv("smtpServer")
+	ret["smtpPort"] = os.Getenv("smtpPort")
+	ret["smtpUsername"] = os.Getenv("smtpUsername")
+	ret["smtpPassword"] = os.Getenv("smtpPassword")
+	return ret
+}
+
 var JWTKey = getJWTKey()
 
 func getJWTKey() string {

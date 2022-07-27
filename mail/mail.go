@@ -1,27 +1,26 @@
 package mail
 
 import (
+	"CP_Discussion/env"
 	"net/smtp"
 
 	"github.com/jordan-wright/email"
 )
 
-const (
-	smtpServer   = "smtp.gmail.com"
-	smtpPort     = ":587"
-	smtpUsername = "cpdiscussion.ta@gmail.com"
-	smtpPassword = ""
-)
-
 func SendMail(to string, subject string, text string) error {
-	auth := smtp.PlainAuth("", smtpUsername, smtpPassword, smtpServer)
+	auth := smtp.PlainAuth(
+		"",
+		env.SmtpInfo["smtpUsername"],
+		env.SmtpInfo["smtpPassword"],
+		env.SmtpInfo["smtpServer"],
+	)
 	e := &email.Email{
 		From:    "CPDiscussion <cpdiscussion.ta@gmail.com>",
 		To:      []string{to},
 		Subject: subject,
 		Text:    []byte(text),
 	}
-	err := e.Send(smtpServer+smtpPort, auth)
+	err := e.Send(env.SmtpInfo["smtpServer"]+env.SmtpInfo["smtpPort"], auth)
 	return err
 }
 
