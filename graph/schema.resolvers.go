@@ -144,6 +144,11 @@ func (r *queryResolver) IsAdmin(ctx context.Context) (bool, error) {
 	return database.DBConnect.MemberIsAdmin(id), nil
 }
 
+// Post is the resolver for the post field.
+func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error) {
+	return database.DBConnect.FindPostById(id)
+}
+
 // Posts is the resolver for the posts field.
 func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
 	return database.DBConnect.AllPost()

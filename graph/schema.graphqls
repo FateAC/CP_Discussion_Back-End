@@ -103,5 +103,6 @@ type Query {
   member(_id: String!): Member!
   members: [Member!]!
   isAdmin: Boolean! @auth
+  post(id: String!): Post!
   posts: [Post!]!
 }

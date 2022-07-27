@@ -102,6 +102,7 @@ type ComplexityRoot struct {
 		IsAdmin  func(childComplexity int) int
 		Member   func(childComplexity int, id string) int
 		Members  func(childComplexity int) int
+		Post     func(childComplexity int, id string) int
 		Posts    func(childComplexity int) int
 		SelfInfo func(childComplexity int) int
 	}
@@ -125,6 +126,7 @@ type QueryResolver interface {
 	Member(ctx context.Context, id string) (*model.Member, error)
 	Members(ctx context.Context) ([]*model.Member, error)
 	IsAdmin(ctx context.Context) (bool, error)
+	Post(ctx context.Context, id string) (*model.Post, error)
 	Posts(ctx context.Context) ([]*model.Post, error)
 }
 
@@ -455,6 +457,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Members(childComplexity), true
 
+	case "Query.post":
+		if e.complexity.Query.Post == nil {
+			break
+		}
+
+		args, err := ec.field_Query_post_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Post(childComplexity, args["id"].(string)), true
+
 	case "Query.posts":
 		if e.complexity.Query.Posts == nil {
 			break
@@ -649,6 +663,7 @@ type Query {
   member(_id: String!): Member!
   members: [Member!]!
   isAdmin: Boolean! @auth
+  post(id: String!): Post!
   posts: [Post!]!
 }
 `, BuiltIn: false},
@@ -869,6 +884,21 @@ func (ec *executionContext) field_Query_member_args(ctx context.Context, rawArgs
 		}
 	}
 	args["_id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_post_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -3005,6 +3035,75 @@ func (ec *executionContext) fieldContext_Query_isAdmin(ctx context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_post(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_post(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Post(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Post)
+	fc.Result = res
+	return ec.marshalNPost2ᚖCP_DiscussionᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "_id":
+				return ec.fieldContext_Post__id(ctx, field)
+			case "title":
+				return ec.fieldContext_Post_title(ctx, field)
+			case "tags":
+				return ec.fieldContext_Post_tags(ctx, field)
+			case "mdPath":
+				return ec.fieldContext_Post_mdPath(ctx, field)
+			case "createTime":
+				return ec.fieldContext_Post_createTime(ctx, field)
+			case "lastModifyTime":
+				return ec.fieldContext_Post_lastModifyTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_post_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -5736,6 +5835,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_isAdmin(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "post":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_post(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

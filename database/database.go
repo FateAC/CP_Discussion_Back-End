@@ -401,6 +401,24 @@ func (db *DB) ResetPassword(input model.NewPwd) (*model.Member, error) {
 	return &member, nil
 }
 
+func (db *DB) FindPostById(id string) (*model.Post, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	post := model.Post{}
+	err = postColl.FindOne(ctx, bson.M{"_id": objectID}).Decode(&post)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return &post, nil
+}
+
 func (db *DB) AllPost() ([]*model.Post, error) {
 	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
