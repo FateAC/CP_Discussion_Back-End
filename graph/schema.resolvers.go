@@ -78,7 +78,7 @@ func (r *mutationResolver) ResetPwd(ctx context.Context, password string) (bool,
 	if !ok {
 		return false, errors.New("failed to get user id from ctx")
 	}
-	member, err := database.DBConnect.ResetPassword(model.NewPwd{ID: id, Password: password})
+	member, err := database.DBConnect.ResetPassword(model.NewPwd{ID: id, Password: strings.ToLower(password)})
 	if err != nil {
 		log.Error.Print(err)
 		return false, err
@@ -99,6 +99,7 @@ func (r *mutationResolver) ResetPwd(ctx context.Context, password string) (bool,
 // SendResetPwd is the resolver for the sendResetPWD field.
 func (r *mutationResolver) SendResetPwd(ctx context.Context, email string) (*string, error) {
 	url := "https://localhost:3000/"
+	email = strings.ToLower(email)
 	if !database.DBConnect.CheckEmailExist(email) {
 		log.Warning.Print("Email is not existed.")
 		return nil, fmt.Errorf("emailIsNotExisted")
