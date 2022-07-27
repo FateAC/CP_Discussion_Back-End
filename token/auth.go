@@ -19,13 +19,13 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func CreatToken(inUserID string) (string, error) {
+func CreateToken(iat time.Time, nbf time.Time, exp time.Time, inUserID string) (string, error) {
 	claims := Claims{
 		UserID: inUserID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(24) * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(exp),
+			IssuedAt:  jwt.NewNumericDate(iat),
+			NotBefore: jwt.NewNumericDate(nbf),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)

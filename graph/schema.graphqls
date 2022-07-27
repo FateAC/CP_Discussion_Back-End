@@ -94,8 +94,8 @@ type Mutation{
   updateMemberNickname(nickname: String): Boolean! @auth
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
-  resetPWD(input: NewPWD!): Member!
-  sendResetPWD(input: SendResetPassword!): Void
+  resetPWD(password: String!): Boolean! @auth
+  sendResetPWD(email: String!): Void
 }
 
 type Query {

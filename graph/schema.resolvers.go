@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 )
@@ -72,11 +73,15 @@ func (r *mutationResolver) RemovePost(ctx context.Context, id string) (*model.Po
 }
 
 // ResetPwd is the resolver for the resetPWD field.
-func (r *mutationResolver) ResetPwd(ctx context.Context, input model.NewPwd) (*model.Member, error) {
-	member, err := database.DBConnect.ResetPassword(input)
+func (r *mutationResolver) ResetPwd(ctx context.Context, password string) (bool, error) {
+	id, ok := ctx.Value(string("UserID")).(string)
+	if !ok {
+		return false, errors.New("failed to get user id from ctx")
+	}
+	member, err := database.DBConnect.ResetPassword(model.NewPwd{ID: id, Password: password})
 	if err != nil {
 		log.Error.Print(err)
-		return nil, err
+		return false, err
 	}
 	err = mail.SendMail(
 		member.Email,
@@ -85,34 +90,38 @@ func (r *mutationResolver) ResetPwd(ctx context.Context, input model.NewPwd) (*m
 	)
 	if err != nil {
 		log.Error.Print(err)
-		return nil, err
+		return false, err
 	}
 	log.Info.Println("Sent verify mail to " + member.Email)
-	return database.DBConnect.ResetPassword(input)
+	return true, err
 }
 
 // SendResetPwd is the resolver for the sendResetPWD field.
-func (r *mutationResolver) SendResetPwd(ctx context.Context, input model.SendResetPassword) (*string, error) {
+func (r *mutationResolver) SendResetPwd(ctx context.Context, email string) (*string, error) {
 	url := "https://localhost:3000/"
-	if !database.DBConnect.CheckEmailExist(input.Email) {
+	if !database.DBConnect.CheckEmailExist(email) {
 		log.Warning.Print("Email is not existed.")
 		return nil, fmt.Errorf("emailIsNotExisted")
 	}
-	token, err := token.CreateResetPWDToken(input.Email)
+	member, err := database.DBConnect.FindMemberByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	token, err := token.CreateToken(time.Now(), time.Now(), time.Now().Add(time.Duration(10)*time.Minute), member.ID)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
 	}
 	err = mail.SendMail(
-		input.Email,
+		email,
 		"重設密碼 (Reset Password)",
-		mail.ResetPWDContent(strings.Split(input.Email, "@")[0], token, url),
+		mail.ResetPWDContent(strings.Split(email, "@")[0], token, url),
 	)
 	if err != nil {
 		log.Error.Print(err)
 		return nil, err
 	}
-	log.Info.Println("Sent ResetPWD mail to " + input.Email)
+	log.Info.Println("Sent ResetPWD mail to " + email)
 	return nil, nil
 }
 

@@ -188,7 +188,7 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 		return &resAuth
 	}
 	if comparePWD(member.Password, password) {
-		token, err := authToken.CreatToken(member.ID)
+		token, err := authToken.CreateToken(time.Now(), time.Now(), time.Now().Add(time.Duration(24)*time.Hour), member.ID)
 		if err != nil {
 			log.Warning.Print(err)
 			return &resAuth
@@ -376,31 +376,6 @@ func (db *DB) DeletePost(id string) (*model.Post, error) {
 	return &post, nil
 }
 
-func (db *DB) ResetPassword(input model.NewPwd) (*model.Member, error) {
-	ObjectID, err := primitive.ObjectIDFromHex(input.ID)
-	if err != nil {
-		log.Warning.Print(err)
-		return nil, err
-	}
-	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	password := input.Password
-	filter := bson.M{"_id": ObjectID}
-	update := bson.M{"$set": bson.M{"password": password}}
-	after := options.After
-	opts := options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
-	}
-	member := model.Member{}
-	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
-	if err != nil {
-		log.Warning.Print(err)
-		return nil, err
-	}
-	return &member, nil
-}
-
 func (db *DB) FindPostById(id string) (*model.Post, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -435,4 +410,42 @@ func (db *DB) AllPost() ([]*model.Post, error) {
 		return nil, err
 	}
 	return posts, nil
+}
+
+func (db *DB) ResetPassword(input model.NewPwd) (*model.Member, error) {
+	ObjectID, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	password := input.Password
+	filter := bson.M{"_id": ObjectID}
+	update := bson.M{"$set": bson.M{"password": password}}
+	after := options.After
+	opts := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	member := model.Member{}
+	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return &member, nil
+}
+
+func (db *DB) FindMemberByEmail(email string) (*model.Member, error) {
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	member := model.Member{}
+	err := memberColl.FindOne(ctx, bson.M{"email": email}).Decode(&member)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return &member, nil
 }

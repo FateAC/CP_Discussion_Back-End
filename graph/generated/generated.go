@@ -83,8 +83,8 @@ type ComplexityRoot struct {
 		RemoveMember         func(childComplexity int, id string) int
 		RemoveMemberCourse   func(childComplexity int, id string, course model.NewCourse) int
 		RemovePost           func(childComplexity int, id string) int
-		ResetPwd             func(childComplexity int, input model.NewPwd) int
-		SendResetPwd         func(childComplexity int, input model.SendResetPassword) int
+		ResetPwd             func(childComplexity int, password string) int
+		SendResetPwd         func(childComplexity int, email string) int
 		UpdateMemberAvatar   func(childComplexity int, avatar *graphql.Upload) int
 		UpdateMemberNickname func(childComplexity int, nickname *string) int
 	}
@@ -118,8 +118,8 @@ type MutationResolver interface {
 	UpdateMemberNickname(ctx context.Context, nickname *string) (bool, error)
 	AddPost(ctx context.Context, input model.NewPost) (*model.Post, error)
 	RemovePost(ctx context.Context, id string) (*model.Post, error)
-	ResetPwd(ctx context.Context, input model.NewPwd) (*model.Member, error)
-	SendResetPwd(ctx context.Context, input model.SendResetPassword) (*string, error)
+	ResetPwd(ctx context.Context, password string) (bool, error)
+	SendResetPwd(ctx context.Context, email string) (*string, error)
 }
 type QueryResolver interface {
 	SelfInfo(ctx context.Context) (*model.Member, error)
@@ -351,7 +351,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ResetPwd(childComplexity, args["input"].(model.NewPwd)), true
+		return e.complexity.Mutation.ResetPwd(childComplexity, args["password"].(string)), true
 
 	case "Mutation.sendResetPWD":
 		if e.complexity.Mutation.SendResetPwd == nil {
@@ -363,7 +363,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SendResetPwd(childComplexity, args["input"].(model.SendResetPassword)), true
+		return e.complexity.Mutation.SendResetPwd(childComplexity, args["email"].(string)), true
 
 	case "Mutation.updateMemberAvatar":
 		if e.complexity.Mutation.UpdateMemberAvatar == nil {
@@ -654,8 +654,8 @@ type Mutation{
   updateMemberNickname(nickname: String): Boolean! @auth
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
-  resetPWD(input: NewPWD!): Member!
-  sendResetPWD(input: SendResetPassword!): Void
+  resetPWD(password: String!): Boolean! @auth
+  sendResetPWD(email: String!): Void
 }
 
 type Query {
@@ -800,30 +800,30 @@ func (ec *executionContext) field_Mutation_removePost_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_resetPWD_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.NewPwd
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewPWD2CP_DiscussionᚋgraphᚋmodelᚐNewPwd(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["password"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["password"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_sendResetPWD_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.SendResetPassword
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSendResetPassword2CP_DiscussionᚋgraphᚋmodelᚐSendResetPassword(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["email"] = arg0
 	return args, nil
 }
 
@@ -2382,8 +2382,28 @@ func (ec *executionContext) _Mutation_resetPWD(ctx context.Context, field graphq
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ResetPwd(rctx, fc.Args["input"].(model.NewPwd))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().ResetPwd(rctx, fc.Args["password"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2395,9 +2415,9 @@ func (ec *executionContext) _Mutation_resetPWD(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Member)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_resetPWD(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2407,25 +2427,7 @@ func (ec *executionContext) fieldContext_Mutation_resetPWD(ctx context.Context, 
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "_id":
-				return ec.fieldContext_Member__id(ctx, field)
-			case "email":
-				return ec.fieldContext_Member_email(ctx, field)
-			case "password":
-				return ec.fieldContext_Member_password(ctx, field)
-			case "isAdmin":
-				return ec.fieldContext_Member_isAdmin(ctx, field)
-			case "username":
-				return ec.fieldContext_Member_username(ctx, field)
-			case "nickname":
-				return ec.fieldContext_Member_nickname(ctx, field)
-			case "avatarPath":
-				return ec.fieldContext_Member_avatarPath(ctx, field)
-			case "courses":
-				return ec.fieldContext_Member_courses(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	defer func() {
@@ -2456,7 +2458,7 @@ func (ec *executionContext) _Mutation_sendResetPWD(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SendResetPwd(rctx, fc.Args["input"].(model.SendResetPassword))
+		return ec.resolvers.Mutation().SendResetPwd(rctx, fc.Args["email"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6443,11 +6445,6 @@ func (ec *executionContext) unmarshalNNewMember2CP_Discussionᚋgraphᚋmodelᚐ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewPWD2CP_DiscussionᚋgraphᚋmodelᚐNewPwd(ctx context.Context, v interface{}) (model.NewPwd, error) {
-	res, err := ec.unmarshalInputNewPWD(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNNewPost2CP_DiscussionᚋgraphᚋmodelᚐNewPost(ctx context.Context, v interface{}) (model.NewPost, error) {
 	res, err := ec.unmarshalInputNewPost(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6509,11 +6506,6 @@ func (ec *executionContext) marshalNPost2ᚖCP_DiscussionᚋgraphᚋmodelᚐPost
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNSendResetPassword2CP_DiscussionᚋgraphᚋmodelᚐSendResetPassword(ctx context.Context, v interface{}) (model.SendResetPassword, error) {
-	res, err := ec.unmarshalInputSendResetPassword(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
