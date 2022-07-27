@@ -2,17 +2,12 @@ package database
 
 import (
 	"CP_Discussion/env"
-	"CP_Discussion/fileHandler"
+	"CP_Discussion/file/fileManager"
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
 	authToken "CP_Discussion/token"
 	"context"
 	"fmt"
-	"io"
-	"net/url"
-	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -78,13 +73,13 @@ func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
 	res, err := memberColl.InsertOne(
 		ctx,
 		struct {
-			Email      string
-			Password   string
-			IsAdmin    bool
-			Username   string
-			Nickname   string
-			AvatarPath string
-			Courses    []*model.Course
+			Email      string          `json:"email" bson:"email"`
+			Password   string          `json:"password" bson:"password"`
+			IsAdmin    bool            `json:"isAdmin" bson:"isAdmin"`
+			Username   string          `json:"username" bson:"username"`
+			Nickname   string          `json:"nickname" bson:"nickname"`
+			AvatarPath string          `json:"avatarPath" bson:"avatarPath"`
+			Courses    []*model.Course `json:"courses" bson:"courses"`
 		}{
 			Email:      input.Email,
 			Password:   input.Password,
@@ -104,7 +99,7 @@ func (db *DB) InsertMember(input model.NewMember) (*model.Member, error) {
 }
 
 func (db *DB) DeleteMember(id string) (*model.Member, error) {
-	ObjectID, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -113,7 +108,7 @@ func (db *DB) DeleteMember(id string) (*model.Member, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	member := model.Member{}
-	err = memberColl.FindOneAndDelete(ctx, bson.M{"_id": ObjectID}).Decode(&member)
+	err = memberColl.FindOneAndDelete(ctx, bson.M{"_id": objectID}).Decode(&member)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -131,7 +126,7 @@ func (db *DB) CheckEmailExist(input string) bool {
 }
 
 func (db *DB) FindMemberById(id string) (*model.Member, error) {
-	ObjectID, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -140,7 +135,7 @@ func (db *DB) FindMemberById(id string) (*model.Member, error) {
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	err = memberColl.FindOne(ctx, bson.M{"_id": ObjectID}).Decode(&member)
+	err = memberColl.FindOne(ctx, bson.M{"_id": objectID}).Decode(&member)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -214,7 +209,7 @@ func parseCourses(courses []*model.NewCourse) []*model.Course {
 }
 
 func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
-	ObjectID, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -223,7 +218,7 @@ func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	course := parseCourse(&input)
-	filter := bson.M{"_id": ObjectID}
+	filter := bson.M{"_id": objectID}
 	update := bson.M{"$addToSet": bson.M{"courses": course}}
 	after := options.After
 	opts := options.FindOneAndUpdateOptions{
@@ -239,7 +234,7 @@ func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, 
 }
 
 func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
-	ObjectID, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -248,7 +243,7 @@ func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Membe
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	course := parseCourse(&input)
-	filter := bson.M{"_id": ObjectID}
+	filter := bson.M{"_id": objectID}
 	update := bson.M{"$pull": bson.M{"courses": course}}
 	after := options.After
 	opts := options.FindOneAndUpdateOptions{
@@ -276,22 +271,10 @@ func (db *DB) UpdateMemberAvatar(id string, avatar *graphql.Upload) (bool, error
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	filename := objectID.Hex() + "." + strings.Split(avatar.ContentType, "/")[1]
-	avatarPath := filepath.Join(fileHandler.AvatarPath, filename)
-	avatarUrl, _ := url.Parse("http://localhost:8080/avatar")
-	avatarUrl.Path = path.Join(avatarUrl.Path, filename)
+	avatarPath := fileManager.BuildAvatarPath(filename)
+	avatarUrl := fileManager.BuildAvatarUrl(filename)
 	log.Debug.Printf("save avatar: %s\n", avatarPath)
-	log.Debug.Printf("avatar url: %s\n", avatarUrl)
-	fo, err := os.Create(avatarPath)
-	if err != nil {
-		log.Warning.Print(err)
-		return false, err
-	}
-	_, err = io.Copy(fo, avatar.File)
-	if err != nil {
-		log.Warning.Print(err)
-		return false, err
-	}
-	err = fo.Close()
+	err = fileManager.SaveFile(avatarPath, avatar.File)
 	if err != nil {
 		log.Warning.Print(err)
 		return false, err
@@ -336,30 +319,57 @@ func (db *DB) InsertPost(input model.NewPost) (*model.Post, error) {
 	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	res, err := postColl.InsertOne(ctx, input)
+	doc := struct {
+		Poster         string    `json:"poster" bson:"poster"`
+		Title          string    `json:"title" bson:"title"`
+		Year           int       `json:"year" bson:"year"`
+		Semester       int       `json:"semester" bson:"semester"`
+		Tags           []string  `json:"tags" bson:"tags"`
+		MdPath         string    `json:"mdPath" bson:"mdPath"`
+		CreateTime     time.Time `json:"createTime" bson:"createTime"`
+		LastModifyTime time.Time `json:"lastModifyTime" bson:"lastModifyTime"`
+	}{
+		Poster:         input.Poster,
+		Title:          input.Title,
+		Year:           input.Year,
+		Semester:       input.Semester,
+		Tags:           input.Tags,
+		MdPath:         "",
+		CreateTime:     time.Now(),
+		LastModifyTime: time.Now(),
+	}
+	res, err := postColl.InsertOne(ctx, doc)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
 	}
-	ObjectID := res.InsertedID.(primitive.ObjectID)
-	filter := bson.M{"_id": ObjectID}
-	update := bson.M{
-		"$set": bson.M{
-			"createTime":     time.Now(),
-			"lastModifyTime": time.Now(),
-		},
+	objectID := res.InsertedID.(primitive.ObjectID)
+	filename := objectID.Hex() + ".md"
+	mdPath := fileManager.BuildPostPath(input.Year, input.Semester, filename)
+	mdUrl := fileManager.BuildPostUrl(input.Year, input.Semester, filename)
+	err = fileManager.SaveFile(mdPath, input.MdFile.File)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
 	}
+	log.Debug.Printf("save markdown: %s\n", mdPath)
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$set": bson.M{"mdPath": mdUrl}}
 	after := options.After
 	opts := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
 	}
 	post := model.Post{}
-	postColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&post)
+	err = postColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&post)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
 	return &post, nil
 }
 
 func (db *DB) DeletePost(id string) (*model.Post, error) {
-	ObjectID, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -368,7 +378,7 @@ func (db *DB) DeletePost(id string) (*model.Post, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	post := model.Post{}
-	err = postColl.FindOneAndDelete(ctx, bson.M{"_id": ObjectID}).Decode(&post)
+	err = postColl.FindOneAndDelete(ctx, bson.M{"_id": objectID}).Decode(&post)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -413,7 +423,7 @@ func (db *DB) AllPost() ([]*model.Post, error) {
 }
 
 func (db *DB) ResetPassword(input model.NewPwd) (*model.Member, error) {
-	ObjectID, err := primitive.ObjectIDFromHex(input.ID)
+	objectID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
@@ -422,7 +432,7 @@ func (db *DB) ResetPassword(input model.NewPwd) (*model.Member, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	password := input.Password
-	filter := bson.M{"_id": ObjectID}
+	filter := bson.M{"_id": objectID}
 	update := bson.M{"$set": bson.M{"password": password}}
 	after := options.After
 	opts := options.FindOneAndUpdateOptions{
@@ -451,7 +461,7 @@ func (db *DB) FindMemberByEmail(email string) (*model.Member, error) {
 }
 
 func (db *DB) UpdateMemberIsAdmin(id string) (bool, error) {
-	ObjectID, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
 		return false, err
@@ -460,7 +470,7 @@ func (db *DB) UpdateMemberIsAdmin(id string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	changeAdmin := !db.MemberIsAdmin(id)
-	filter := bson.M{"_id": ObjectID}
+	filter := bson.M{"_id": objectID}
 	update := bson.M{"$set": bson.M{"isAdmin": changeAdmin}}
 	log.Info.Println("change admin!!!")
 	_, err = memberColl.UpdateOne(ctx, filter, update)

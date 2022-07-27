@@ -62,7 +62,10 @@ input NewComment {
 
 type Post {
   _id: ID!
+  poster: String!
   title: String!
+  year: Int!
+  semester: Int!
   tags: [String!]!
   mdPath: String!
   createTime: Time!
@@ -70,9 +73,12 @@ type Post {
 }
 
 input NewPost {
+  poster: String!
   title: String!
+  year: Int!
+  semester: Int!
   tags: [String!]!
-  mdPath: String!
+  mdFile: Upload!
 }
 
 input NewPWD {

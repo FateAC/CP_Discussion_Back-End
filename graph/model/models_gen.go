@@ -4,6 +4,8 @@ package model
 
 import (
 	"time"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 type Auth struct {
@@ -63,14 +65,20 @@ type NewPwd struct {
 }
 
 type NewPost struct {
-	Title  string   `json:"title" bson:"title"`
-	Tags   []string `json:"tags" bson:"tags"`
-	MdPath string   `json:"mdPath" bson:"mdPath"`
+	Poster   string         `json:"poster" bson:"poster"`
+	Title    string         `json:"title" bson:"title"`
+	Year     int            `json:"year" bson:"year"`
+	Semester int            `json:"semester" bson:"semester"`
+	Tags     []string       `json:"tags" bson:"tags"`
+	MdFile   graphql.Upload `json:"mdFile" bson:"mdFile"`
 }
 
 type Post struct {
 	ID             string    `json:"_id" bson:"_id"`
+	Poster         string    `json:"poster" bson:"poster"`
 	Title          string    `json:"title" bson:"title"`
+	Year           int       `json:"year" bson:"year"`
+	Semester       int       `json:"semester" bson:"semester"`
 	Tags           []string  `json:"tags" bson:"tags"`
 	MdPath         string    `json:"mdPath" bson:"mdPath"`
 	CreateTime     time.Time `json:"createTime" bson:"createTime"`

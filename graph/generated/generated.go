@@ -95,8 +95,11 @@ type ComplexityRoot struct {
 		ID             func(childComplexity int) int
 		LastModifyTime func(childComplexity int) int
 		MdPath         func(childComplexity int) int
+		Poster         func(childComplexity int) int
+		Semester       func(childComplexity int) int
 		Tags           func(childComplexity int) int
 		Title          func(childComplexity int) int
+		Year           func(childComplexity int) int
 	}
 
 	Query struct {
@@ -431,6 +434,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.MdPath(childComplexity), true
 
+	case "Post.poster":
+		if e.complexity.Post.Poster == nil {
+			break
+		}
+
+		return e.complexity.Post.Poster(childComplexity), true
+
+	case "Post.semester":
+		if e.complexity.Post.Semester == nil {
+			break
+		}
+
+		return e.complexity.Post.Semester(childComplexity), true
+
 	case "Post.tags":
 		if e.complexity.Post.Tags == nil {
 			break
@@ -444,6 +461,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.Title(childComplexity), true
+
+	case "Post.year":
+		if e.complexity.Post.Year == nil {
+			break
+		}
+
+		return e.complexity.Post.Year(childComplexity), true
 
 	case "Query.isAdmin":
 		if e.complexity.Query.IsAdmin == nil {
@@ -636,7 +660,10 @@ input NewComment {
 
 type Post {
   _id: ID!
+  poster: String!
   title: String!
+  year: Int!
+  semester: Int!
   tags: [String!]!
   mdPath: String!
   createTime: Time!
@@ -644,9 +671,12 @@ type Post {
 }
 
 input NewPost {
+  poster: String!
   title: String!
+  year: Int!
+  semester: Int!
   tags: [String!]!
-  mdPath: String!
+  mdFile: Upload!
 }
 
 input NewPWD {
@@ -2302,8 +2332,14 @@ func (ec *executionContext) fieldContext_Mutation_addPost(ctx context.Context, f
 			switch field.Name {
 			case "_id":
 				return ec.fieldContext_Post__id(ctx, field)
+			case "poster":
+				return ec.fieldContext_Post_poster(ctx, field)
 			case "title":
 				return ec.fieldContext_Post_title(ctx, field)
+			case "year":
+				return ec.fieldContext_Post_year(ctx, field)
+			case "semester":
+				return ec.fieldContext_Post_semester(ctx, field)
 			case "tags":
 				return ec.fieldContext_Post_tags(ctx, field)
 			case "mdPath":
@@ -2371,8 +2407,14 @@ func (ec *executionContext) fieldContext_Mutation_removePost(ctx context.Context
 			switch field.Name {
 			case "_id":
 				return ec.fieldContext_Post__id(ctx, field)
+			case "poster":
+				return ec.fieldContext_Post_poster(ctx, field)
 			case "title":
 				return ec.fieldContext_Post_title(ctx, field)
+			case "year":
+				return ec.fieldContext_Post_year(ctx, field)
+			case "semester":
+				return ec.fieldContext_Post_semester(ctx, field)
 			case "tags":
 				return ec.fieldContext_Post_tags(ctx, field)
 			case "mdPath":
@@ -2645,6 +2687,50 @@ func (ec *executionContext) fieldContext_Post__id(ctx context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _Post_poster(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Post_poster(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Poster, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Post_poster(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Post_title(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_title(ctx, field)
 	if err != nil {
@@ -2684,6 +2770,94 @@ func (ec *executionContext) fieldContext_Post_title(ctx context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Post_year(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Post_year(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Year, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Post_year(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Post_semester(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Post_semester(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Semester, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Post_semester(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3187,8 +3361,14 @@ func (ec *executionContext) fieldContext_Query_post(ctx context.Context, field g
 			switch field.Name {
 			case "_id":
 				return ec.fieldContext_Post__id(ctx, field)
+			case "poster":
+				return ec.fieldContext_Post_poster(ctx, field)
 			case "title":
 				return ec.fieldContext_Post_title(ctx, field)
+			case "year":
+				return ec.fieldContext_Post_year(ctx, field)
+			case "semester":
+				return ec.fieldContext_Post_semester(ctx, field)
 			case "tags":
 				return ec.fieldContext_Post_tags(ctx, field)
 			case "mdPath":
@@ -3256,8 +3436,14 @@ func (ec *executionContext) fieldContext_Query_posts(ctx context.Context, field 
 			switch field.Name {
 			case "_id":
 				return ec.fieldContext_Post__id(ctx, field)
+			case "poster":
+				return ec.fieldContext_Post_poster(ctx, field)
 			case "title":
 				return ec.fieldContext_Post_title(ctx, field)
+			case "year":
+				return ec.fieldContext_Post_year(ctx, field)
+			case "semester":
+				return ec.fieldContext_Post_semester(ctx, field)
 			case "tags":
 				return ec.fieldContext_Post_tags(ctx, field)
 			case "mdPath":
@@ -5386,18 +5572,42 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"title", "tags", "mdPath"}
+	fieldsInOrder := [...]string{"poster", "title", "year", "semester", "tags", "mdFile"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "poster":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poster"))
+			it.Poster, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "title":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
 			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "year":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+			it.Year, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "semester":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("semester"))
+			it.Semester, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5409,11 +5619,11 @@ func (ec *executionContext) unmarshalInputNewPost(ctx context.Context, obj inter
 			if err != nil {
 				return it, err
 			}
-		case "mdPath":
+		case "mdFile":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mdPath"))
-			it.MdPath, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mdFile"))
+			it.MdFile, err = ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5807,9 +6017,30 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "poster":
+
+			out.Values[i] = ec._Post_poster(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "title":
 
 			out.Values[i] = ec._Post_title(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "year":
+
+			out.Values[i] = ec._Post_year(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "semester":
+
+			out.Values[i] = ec._Post_semester(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -6676,6 +6907,21 @@ func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v in
 
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
 	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	res := graphql.MarshalUpload(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
