@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	PostPath   = "./data/post"
-	AvatarPath = "./data/avatar"
+	PostPath   = "data/post"
+	AvatarPath = "data/avatar"
 )
 
 func PostHandler() gin.HandlerFunc {

@@ -9,7 +9,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -274,9 +276,12 @@ func (db *DB) UpdateMemberAvatar(id string, avatar *graphql.Upload) (bool, error
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	filename := objectID.Hex() + "." + strings.Split(avatar.ContentType, "/")[1]
-	filepath := filepath.Join(fileHandler.AvatarPath, filename)
-	log.Debug.Printf("save avatar: %s\n", filepath)
-	fo, err := os.Create(filepath)
+	avatarPath := filepath.Join(fileHandler.AvatarPath, filename)
+	avatarUrl, _ := url.Parse("http://localhost:8080/avatar")
+	avatarUrl.Path = path.Join(avatarUrl.Path, filename)
+	log.Debug.Printf("save avatar: %s\n", avatarPath)
+	log.Debug.Printf("avatar url: %s\n", avatarUrl)
+	fo, err := os.Create(avatarPath)
 	if err != nil {
 		log.Warning.Print(err)
 		return false, err
@@ -291,7 +296,7 @@ func (db *DB) UpdateMemberAvatar(id string, avatar *graphql.Upload) (bool, error
 		log.Warning.Print(err)
 		return false, err
 	}
-	update := bson.M{"$set": bson.M{"avatarPath": filepath}}
+	update := bson.M{"$set": bson.M{"avatarPath": avatarUrl}}
 	_, err = memberColl.UpdateByID(ctx, objectID, update)
 	if err != nil {
 		log.Warning.Print(err)
