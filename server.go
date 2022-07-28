@@ -51,8 +51,8 @@ func main() {
 	router.Use(middleware.AuthMiddleware())
 	router.GET("/", playgroundHandler())
 	router.POST("/query", graphqlHandler())
-	router.GET("/post/:year/:semester/:filename", fileHandler.PostHandler())
-	router.GET("/avatar/:filename", fileHandler.AvatarHandler())
+	router.GET("/post/:year/:semester/:filename", fileHandler.FileHandler())
+	router.GET("/avatar/:filename", fileHandler.FileHandler())
 
 	log.Info.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Error.Fatal(router.Run(":" + port))
