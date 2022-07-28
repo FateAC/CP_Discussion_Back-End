@@ -85,9 +85,9 @@ type ComplexityRoot struct {
 		RemovePost           func(childComplexity int, id string) int
 		ResetPwd             func(childComplexity int, password string) int
 		SendResetPwd         func(childComplexity int, email string) int
-		UpdateMemberAvatar   func(childComplexity int, avatar *graphql.Upload) int
+		UpdateMemberAvatar   func(childComplexity int, avatar graphql.Upload) int
 		UpdateMemberIsAdmin  func(childComplexity int, id string) int
-		UpdateMemberNickname func(childComplexity int, nickname *string) int
+		UpdateMemberNickname func(childComplexity int, nickname string) int
 	}
 
 	Post struct {
@@ -118,8 +118,8 @@ type MutationResolver interface {
 	LoginCheck(ctx context.Context, input model.Login) (*model.Auth, error)
 	AddMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error)
 	RemoveMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error)
-	UpdateMemberAvatar(ctx context.Context, avatar *graphql.Upload) (bool, error)
-	UpdateMemberNickname(ctx context.Context, nickname *string) (bool, error)
+	UpdateMemberAvatar(ctx context.Context, avatar graphql.Upload) (bool, error)
+	UpdateMemberNickname(ctx context.Context, nickname string) (bool, error)
 	AddPost(ctx context.Context, input model.NewPost) (*model.Post, error)
 	RemovePost(ctx context.Context, id string) (*model.Post, error)
 	ResetPwd(ctx context.Context, password string) (bool, error)
@@ -380,7 +380,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateMemberAvatar(childComplexity, args["avatar"].(*graphql.Upload)), true
+		return e.complexity.Mutation.UpdateMemberAvatar(childComplexity, args["avatar"].(graphql.Upload)), true
 
 	case "Mutation.updateMemberIsAdmin":
 		if e.complexity.Mutation.UpdateMemberIsAdmin == nil {
@@ -404,7 +404,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateMemberNickname(childComplexity, args["nickname"].(*string)), true
+		return e.complexity.Mutation.UpdateMemberNickname(childComplexity, args["nickname"].(string)), true
 
 	case "Post.createTime":
 		if e.complexity.Post.CreateTime == nil {
@@ -694,8 +694,8 @@ type Mutation{
   loginCheck(input: Login!): Auth!
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
-  updateMemberAvatar(avatar: Upload): Boolean! @auth
-  updateMemberNickname(nickname: String): Boolean! @auth
+  updateMemberAvatar(avatar: Upload!): Boolean! @auth
+  updateMemberNickname(nickname: String!): Boolean! @auth
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
   resetPWD(password: String!): Boolean! @auth
@@ -875,10 +875,10 @@ func (ec *executionContext) field_Mutation_sendResetPWD_args(ctx context.Context
 func (ec *executionContext) field_Mutation_updateMemberAvatar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *graphql.Upload
+	var arg0 graphql.Upload
 	if tmp, ok := rawArgs["avatar"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("avatar"))
-		arg0, err = ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
+		arg0, err = ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -905,10 +905,10 @@ func (ec *executionContext) field_Mutation_updateMemberIsAdmin_args(ctx context.
 func (ec *executionContext) field_Mutation_updateMemberNickname_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["nickname"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nickname"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2156,7 +2156,7 @@ func (ec *executionContext) _Mutation_updateMemberAvatar(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateMemberAvatar(rctx, fc.Args["avatar"].(*graphql.Upload))
+			return ec.resolvers.Mutation().UpdateMemberAvatar(rctx, fc.Args["avatar"].(graphql.Upload))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Auth == nil {
@@ -2231,7 +2231,7 @@ func (ec *executionContext) _Mutation_updateMemberNickname(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().UpdateMemberNickname(rctx, fc.Args["nickname"].(*string))
+			return ec.resolvers.Mutation().UpdateMemberNickname(rctx, fc.Args["nickname"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Auth == nil {
@@ -7222,22 +7222,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (*graphql.Upload, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalUpload(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalUpload(*v)
 	return res
 }
 

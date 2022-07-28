@@ -96,8 +96,8 @@ type Mutation{
   loginCheck(input: Login!): Auth!
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
-  updateMemberAvatar(avatar: Upload): Boolean! @auth
-  updateMemberNickname(nickname: String): Boolean! @auth
+  updateMemberAvatar(avatar: Upload!): Boolean! @auth
+  updateMemberNickname(nickname: String!): Boolean! @auth
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
   resetPWD(password: String!): Boolean! @auth

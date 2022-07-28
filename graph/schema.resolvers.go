@@ -45,7 +45,7 @@ func (r *mutationResolver) RemoveMemberCourse(ctx context.Context, id string, co
 }
 
 // UpdateMemberAvatar is the resolver for the updateMemberAvatar field.
-func (r *mutationResolver) UpdateMemberAvatar(ctx context.Context, avatar *graphql.Upload) (bool, error) {
+func (r *mutationResolver) UpdateMemberAvatar(ctx context.Context, avatar graphql.Upload) (bool, error) {
 	id, ok := ctx.Value(string("UserID")).(string)
 	if !ok {
 		return false, errors.New("failed to get user id from ctx")
@@ -54,7 +54,7 @@ func (r *mutationResolver) UpdateMemberAvatar(ctx context.Context, avatar *graph
 }
 
 // UpdateMemberNickname is the resolver for the updateMemberNickname field.
-func (r *mutationResolver) UpdateMemberNickname(ctx context.Context, nickname *string) (bool, error) {
+func (r *mutationResolver) UpdateMemberNickname(ctx context.Context, nickname string) (bool, error) {
 	id, ok := ctx.Value(string("UserID")).(string)
 	if !ok {
 		return false, errors.New("failed to get user id from ctx")

@@ -258,10 +258,7 @@ func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Membe
 	return &member, nil
 }
 
-func (db *DB) UpdateMemberAvatar(id string, avatar *graphql.Upload) (bool, error) {
-	if avatar == nil {
-		return true, nil
-	}
+func (db *DB) UpdateMemberAvatar(id string, avatar graphql.Upload) (bool, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
@@ -288,10 +285,7 @@ func (db *DB) UpdateMemberAvatar(id string, avatar *graphql.Upload) (bool, error
 	return true, nil
 }
 
-func (db *DB) UpdateMemberNickname(id string, nickname *string) (bool, error) {
-	if nickname == nil {
-		return true, nil
-	}
+func (db *DB) UpdateMemberNickname(id string, nickname string) (bool, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
@@ -300,7 +294,7 @@ func (db *DB) UpdateMemberNickname(id string, nickname *string) (bool, error) {
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	update := bson.M{"$set": bson.M{"nickname": *nickname}}
+	update := bson.M{"$set": bson.M{"nickname": nickname}}
 	_, err = memberColl.UpdateByID(ctx, objectID, update)
 	if err != nil {
 		log.Warning.Print(err)
