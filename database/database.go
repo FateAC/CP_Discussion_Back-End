@@ -8,6 +8,9 @@ import (
 	authToken "CP_Discussion/token"
 	"context"
 	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -377,6 +380,12 @@ func (db *DB) DeletePost(id string) (*model.Post, error) {
 		log.Warning.Print(err)
 		return nil, err
 	}
+	mdUrl, err := url.Parse(post.MdPath)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	_ = os.Remove(filepath.Join("data", mdUrl.Path))
 	return &post, nil
 }
 
