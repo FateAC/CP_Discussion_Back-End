@@ -8,18 +8,24 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type ResetPWDClaims struct {
-	Email string
+var tokenErrs = []error{
+	jwt.ErrTokenMalformed,
+	jwt.ErrTokenExpired,
+	jwt.ErrTokenNotValidYet,
+}
+
+type Claims struct {
+	UserID string
 	jwt.RegisteredClaims
 }
 
-func CreateResetPWDToken(inEmail string) (string, error) {
-	claims := ResetPWDClaims{
-		Email: inEmail,
+func CreateToken(iat time.Time, nbf time.Time, exp time.Time, inUserID string) (string, error) {
+	claims := Claims{
+		UserID: inUserID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(10) * time.Minute)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(exp),
+			IssuedAt:  jwt.NewNumericDate(iat),
+			NotBefore: jwt.NewNumericDate(nbf),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
@@ -30,8 +36,8 @@ func CreateResetPWDToken(inEmail string) (string, error) {
 	return tokenString, nil
 }
 
-func ParseResetPWDToken(inToken string) (*ResetPWDClaims, error) {
-	token, err := jwt.ParseWithClaims(inToken, &ResetPWDClaims{},
+func ParseToken(inToken string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(inToken, &Claims{},
 		func(t *jwt.Token) (interface{}, error) {
 			return []byte(env.JWTKey), nil
 		},
@@ -46,7 +52,7 @@ func ParseResetPWDToken(inToken string) (*ResetPWDClaims, error) {
 		}
 		return nil, errors.New("couldn't handle this token")
 	}
-	if claims, ok := token.Claims.(*ResetPWDClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
 	}
 	return nil, errors.New("couldn't handle this token")

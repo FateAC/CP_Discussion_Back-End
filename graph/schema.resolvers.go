@@ -4,12 +4,12 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	token "CP_Discussion/auth"
 	"CP_Discussion/database"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
 	"CP_Discussion/mail"
-	"CP_Discussion/token"
 	"context"
 	"errors"
 	"fmt"

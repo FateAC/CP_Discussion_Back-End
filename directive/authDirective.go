@@ -1,9 +1,9 @@
 package directive
 
 import (
+	token "CP_Discussion/auth"
 	"CP_Discussion/database"
 	"CP_Discussion/log"
-	authToken "CP_Discussion/token"
 	"context"
 	"errors"
 
@@ -11,15 +11,15 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
-func parseContextClaims(ctx context.Context) (*authToken.Claims, error) {
-	token, ok := ctx.Value("token").(string)
-	log.Debug.Println(token)
-	if !ok || token == "" {
+func parseContextClaims(ctx context.Context) (*token.Claims, error) {
+	_token, ok := ctx.Value("token").(string)
+	log.Debug.Println(_token)
+	if !ok || _token == "" {
 		return nil, errors.New("no token provided")
 	}
 	bearer := "Bearer "
-	token = token[len(bearer):]
-	claims, err := authToken.ParseToken(token)
+	_token = _token[len(bearer):]
+	claims, err := token.ParseToken(_token)
 	if err != nil {
 		return nil, err
 	}
