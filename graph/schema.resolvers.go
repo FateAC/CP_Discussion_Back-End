@@ -4,7 +4,7 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	token "CP_Discussion/auth"
+	"CP_Discussion/auth"
 	"CP_Discussion/database"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/graph/model"
@@ -108,7 +108,7 @@ func (r *mutationResolver) SendResetPwd(ctx context.Context, email string) (*str
 	if err != nil {
 		return nil, err
 	}
-	token, err := token.CreateToken(time.Now(), time.Now(), time.Now().Add(time.Duration(10)*time.Minute), member.ID)
+	token, err := auth.CreateToken(time.Now(), time.Now(), time.Now().Add(time.Duration(10)*time.Minute), member.ID)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err

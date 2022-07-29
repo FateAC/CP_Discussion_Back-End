@@ -1,4 +1,4 @@
-package token
+package auth
 
 import (
 	"CP_Discussion/env"

@@ -1,7 +1,7 @@
 package database
 
 import (
-	Token "CP_Discussion/auth"
+	"CP_Discussion/auth"
 	"CP_Discussion/env"
 	"CP_Discussion/file/fileManager"
 	"CP_Discussion/graph/model"
@@ -186,7 +186,7 @@ func (db *DB) LoginCheck(input model.Login) *model.Auth {
 		return &resAuth
 	}
 	if comparePWD(member.Password, password) {
-		token, err := Token.CreateToken(time.Now(), time.Now(), time.Now().Add(time.Duration(24)*time.Hour), member.ID)
+		token, err := auth.CreateToken(time.Now(), time.Now(), time.Now().Add(time.Duration(24)*time.Hour), member.ID)
 		if err != nil {
 			log.Warning.Print(err)
 			return &resAuth
