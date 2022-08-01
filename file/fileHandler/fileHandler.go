@@ -8,6 +8,6 @@ import (
 
 func FileHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.File(filepath.Join("data", c.Request.URL.String()))
+		c.File(filepath.Join("data", c.Request.URL.Path))
 	}
 }
