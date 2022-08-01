@@ -53,6 +53,11 @@ func (r *mutationResolver) UpdateMemberAvatar(ctx context.Context, avatar graphq
 	return database.DBConnect.UpdateMemberAvatar(id, avatar)
 }
 
+// RemoveMemberAvatar is the resolver for the removeMemberAvatar field.
+func (r *mutationResolver) RemoveMemberAvatar(ctx context.Context, id string) (bool, error) {
+	return database.DBConnect.DeleteMemberAvatar(id)
+}
+
 // UpdateMemberNickname is the resolver for the updateMemberNickname field.
 func (r *mutationResolver) UpdateMemberNickname(ctx context.Context, nickname string) (bool, error) {
 	id, ok := ctx.Value(string("UserID")).(string)
@@ -123,7 +128,7 @@ func (r *mutationResolver) SendResetPwd(ctx context.Context, email string) (bool
 		return false, fmt.Errorf("sendMailFailed")
 	}
 	log.Info.Println("Sent ResetPWD mail to " + email)
-	return true, fmt.Errorf("sendMailSuccess")
+	return true, nil
 }
 
 // UpdateMemberIsAdmin is the resolver for the updateMemberIsAdmin field.

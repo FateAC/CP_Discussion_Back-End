@@ -97,6 +97,7 @@ type Mutation{
   addMemberCourse (id: String!, course: NewCourse!): Member! @admin
   removeMemberCourse (id: String!, course: NewCourse!): Member! @admin
   updateMemberAvatar(avatar: Upload!): Boolean! @auth
+  removeMemberAvatar(id: String!): Boolean! @auth
   updateMemberNickname(nickname: String!): Boolean! @auth
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!

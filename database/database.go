@@ -288,6 +288,32 @@ func (db *DB) UpdateMemberAvatar(id string, avatar graphql.Upload) (bool, error)
 	return true, nil
 }
 
+func (db *DB) DeleteMemberAvatar(id string) (bool, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	member := model.Member{}
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$set": bson.M{"avatarPath": ""}}
+	err = memberColl.FindOneAndUpdate(ctx, filter, update).Decode(&member)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	Url, err := url.Parse(member.AvatarPath)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	_ = os.Remove(filepath.Join("data", Url.Path))
+	return true, nil
+}
+
 func (db *DB) UpdateMemberNickname(id string, nickname string) (bool, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
