@@ -123,7 +123,7 @@ type MutationResolver interface {
 	AddPost(ctx context.Context, input model.NewPost) (*model.Post, error)
 	RemovePost(ctx context.Context, id string) (*model.Post, error)
 	ResetPwd(ctx context.Context, password string) (bool, error)
-	SendResetPwd(ctx context.Context, email string) (*string, error)
+	SendResetPwd(ctx context.Context, email string) (bool, error)
 	UpdateMemberIsAdmin(ctx context.Context, id string) (bool, error)
 }
 type QueryResolver interface {
@@ -699,7 +699,7 @@ type Mutation{
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
   resetPWD(password: String!): Boolean! @auth
-  sendResetPWD(email: String!): Void
+  sendResetPWD(email: String!): Boolean!
   updateMemberIsAdmin(id: String!): Boolean! @admin
 }
 
@@ -2537,11 +2537,14 @@ func (ec *executionContext) _Mutation_sendResetPWD(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOVoid2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_sendResetPWD(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2551,7 +2554,7 @@ func (ec *executionContext) fieldContext_Mutation_sendResetPWD(ctx context.Conte
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Void does not have child fields")
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	defer func() {
@@ -5980,6 +5983,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 				return ec._Mutation_sendResetPWD(ctx, field)
 			})
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updateMemberIsAdmin":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -7218,22 +7224,6 @@ func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v in
 }
 
 func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOVoid2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalString(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOVoid2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

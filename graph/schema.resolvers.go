@@ -97,21 +97,21 @@ func (r *mutationResolver) ResetPwd(ctx context.Context, password string) (bool,
 }
 
 // SendResetPwd is the resolver for the sendResetPWD field.
-func (r *mutationResolver) SendResetPwd(ctx context.Context, email string) (*string, error) {
-	url := "https://localhost:3000/"
+func (r *mutationResolver) SendResetPwd(ctx context.Context, email string) (bool, error) {
+	url := "http://localhost:3000/"
 	email = strings.ToLower(email)
 	if !database.DBConnect.CheckEmailExist(email) {
 		log.Warning.Print("Email is not existed.")
-		return nil, fmt.Errorf("emailIsNotExisted")
+		return false, fmt.Errorf("emailIsNotExisted")
 	}
 	member, err := database.DBConnect.FindMemberByEmail(email)
 	if err != nil {
-		return nil, err
+		return false, fmt.Errorf("emailIsNotInMember")
 	}
 	token, err := auth.CreateToken(time.Now(), time.Now(), time.Now().Add(time.Duration(10)*time.Minute), member.ID)
 	if err != nil {
 		log.Warning.Print(err)
-		return nil, err
+		return false, fmt.Errorf("createTokenFailed")
 	}
 	err = mail.SendMail(
 		email,
@@ -120,10 +120,10 @@ func (r *mutationResolver) SendResetPwd(ctx context.Context, email string) (*str
 	)
 	if err != nil {
 		log.Error.Print(err)
-		return nil, err
+		return false, fmt.Errorf("sendMailFailed")
 	}
 	log.Info.Println("Sent ResetPWD mail to " + email)
-	return nil, nil
+	return true, fmt.Errorf("sendMailSuccess")
 }
 
 // UpdateMemberIsAdmin is the resolver for the updateMemberIsAdmin field.
