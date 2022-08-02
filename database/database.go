@@ -453,6 +453,42 @@ func (db *DB) AllPost() ([]*model.Post, error) {
 	return posts, nil
 }
 
+func (db *DB) AddPostComment(id string, commmenterID string, newComment model.NewComment) (bool, error) {
+	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	commterObjectID, err := primitive.ObjectIDFromHex(commmenterID)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	comment := struct {
+		Commenter primitive.ObjectID `json:"commenter" bson:"commenter"`
+		Content   string             `json:"content" bson:"content"`
+		MainLevel int                `json:"mainLevel" bson:"mainLevel"`
+		SubLevel  int                `json:"subLevel" bson:"subLevel"`
+		Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
+	}{
+		Commenter: commterObjectID,
+		Content:   newComment.Content,
+		MainLevel: newComment.MainLevel,
+		SubLevel:  newComment.SubLevel,
+		Timestamp: time.Now(),
+	}
+	update := bson.M{"$push": bson.M{"comments": comment}}
+	_, err = postColl.UpdateByID(ctx, objectID, update)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	return true, nil
+}
+
 func (db *DB) ResetPassword(input model.NewPwd) (*model.Member, error) {
 	objectID, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {

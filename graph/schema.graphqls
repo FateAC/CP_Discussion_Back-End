@@ -54,7 +54,6 @@ type Comment {
 }
 
 input NewComment {
-  commenter: ID!
   content: String!
   mainLevel: Int!
   subLevel: Int!
@@ -91,7 +90,7 @@ input SendResetPassword {
   email: String!
 }
 
-type Mutation{
+type Mutation {
   createMember (input: NewMember!): Member! @admin
   removeMember (id: String!): Member! @admin
   loginCheck(input: Login!): Auth!
@@ -102,6 +101,7 @@ type Mutation{
   updateMemberNickname(nickname: String!): Boolean! @auth
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
+  addPostComment(id: String!, newComment: NewComment!): Boolean! @auth
   resetPWD(password: String!): Boolean! @auth
   sendResetPWD(email: String!): Boolean!
   updateMemberIsAdmin(id: String!): Boolean! @admin

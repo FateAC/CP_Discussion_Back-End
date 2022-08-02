@@ -42,7 +42,6 @@ type Member struct {
 }
 
 type NewComment struct {
-	Commenter string `json:"commenter" bson:"commenter"`
 	Content   string `json:"content" bson:"content"`
 	MainLevel int    `json:"mainLevel" bson:"mainLevel"`
 	SubLevel  int    `json:"subLevel" bson:"subLevel"`
