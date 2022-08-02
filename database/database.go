@@ -343,14 +343,15 @@ func (db *DB) InsertPost(input model.NewPost) (*model.Post, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	doc := struct {
-		Poster         string    `json:"poster" bson:"poster"`
-		Title          string    `json:"title" bson:"title"`
-		Year           int       `json:"year" bson:"year"`
-		Semester       int       `json:"semester" bson:"semester"`
-		Tags           []string  `json:"tags" bson:"tags"`
-		MdPath         string    `json:"mdPath" bson:"mdPath"`
-		CreateTime     time.Time `json:"createTime" bson:"createTime"`
-		LastModifyTime time.Time `json:"lastModifyTime" bson:"lastModifyTime"`
+		Poster         string           `json:"poster" bson:"poster"`
+		Title          string           `json:"title" bson:"title"`
+		Year           int              `json:"year" bson:"year"`
+		Semester       int              `json:"semester" bson:"semester"`
+		Tags           []string         `json:"tags" bson:"tags"`
+		MdPath         string           `json:"mdPath" bson:"mdPath"`
+		CreateTime     time.Time        `json:"createTime" bson:"createTime"`
+		LastModifyTime time.Time        `json:"lastModifyTime" bson:"lastModifyTime"`
+		Comments       []*model.Comment `json:"comments" bson:"comments"`
 	}{
 		Poster:         input.Poster,
 		Title:          input.Title,
@@ -360,6 +361,7 @@ func (db *DB) InsertPost(input model.NewPost) (*model.Post, error) {
 		MdPath:         "",
 		CreateTime:     time.Now(),
 		LastModifyTime: time.Now(),
+		Comments:       []*model.Comment{},
 	}
 	res, err := postColl.InsertOne(ctx, doc)
 	if err != nil {

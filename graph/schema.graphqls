@@ -70,6 +70,7 @@ type Post {
   mdPath: String!
   createTime: Time!
   lastModifyTime: Time!
+  comments: [Comment!]!
 }
 
 input NewPost {

@@ -74,15 +74,16 @@ type NewPost struct {
 }
 
 type Post struct {
-	ID             string    `json:"_id" bson:"_id"`
-	Poster         string    `json:"poster" bson:"poster"`
-	Title          string    `json:"title" bson:"title"`
-	Year           int       `json:"year" bson:"year"`
-	Semester       int       `json:"semester" bson:"semester"`
-	Tags           []string  `json:"tags" bson:"tags"`
-	MdPath         string    `json:"mdPath" bson:"mdPath"`
-	CreateTime     time.Time `json:"createTime" bson:"createTime"`
-	LastModifyTime time.Time `json:"lastModifyTime" bson:"lastModifyTime"`
+	ID             string     `json:"_id" bson:"_id"`
+	Poster         string     `json:"poster" bson:"poster"`
+	Title          string     `json:"title" bson:"title"`
+	Year           int        `json:"year" bson:"year"`
+	Semester       int        `json:"semester" bson:"semester"`
+	Tags           []string   `json:"tags" bson:"tags"`
+	MdPath         string     `json:"mdPath" bson:"mdPath"`
+	CreateTime     time.Time  `json:"createTime" bson:"createTime"`
+	LastModifyTime time.Time  `json:"lastModifyTime" bson:"lastModifyTime"`
+	Comments       []*Comment `json:"comments" bson:"comments"`
 }
 
 type SendResetPassword struct {
