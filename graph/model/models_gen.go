@@ -19,6 +19,7 @@ type Comment struct {
 	MainLevel int       `json:"mainLevel" bson:"mainLevel"`
 	SubLevel  int       `json:"subLevel" bson:"subLevel"`
 	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
+	Deleted   bool      `json:"deleted" bson:"deleted"`
 }
 
 type Course struct {

@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 	Comment struct {
 		Commenter func(childComplexity int) int
 		Content   func(childComplexity int) int
+		Deleted   func(childComplexity int) int
 		MainLevel func(childComplexity int) int
 		SubLevel  func(childComplexity int) int
 		Timestamp func(childComplexity int) int
@@ -80,6 +81,7 @@ type ComplexityRoot struct {
 		AddPost              func(childComplexity int, input model.NewPost) int
 		AddPostComment       func(childComplexity int, id string, newComment model.NewComment) int
 		CreateMember         func(childComplexity int, input model.NewMember) int
+		DeletePostComment    func(childComplexity int, id string, mainLevel int, subLevel int) int
 		LoginCheck           func(childComplexity int, input model.Login) int
 		RemoveMember         func(childComplexity int, id string) int
 		RemoveMemberAvatar   func(childComplexity int, id string) int
@@ -127,6 +129,7 @@ type MutationResolver interface {
 	AddPost(ctx context.Context, input model.NewPost) (*model.Post, error)
 	RemovePost(ctx context.Context, id string) (*model.Post, error)
 	AddPostComment(ctx context.Context, id string, newComment model.NewComment) (bool, error)
+	DeletePostComment(ctx context.Context, id string, mainLevel int, subLevel int) (bool, error)
 	ResetPwd(ctx context.Context, password string) (bool, error)
 	SendResetPwd(ctx context.Context, email string) (bool, error)
 	UpdateMemberIsAdmin(ctx context.Context, id string) (bool, error)
@@ -182,6 +185,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Comment.Content(childComplexity), true
+
+	case "Comment.deleted":
+		if e.complexity.Comment.Deleted == nil {
+			break
+		}
+
+		return e.complexity.Comment.Deleted(childComplexity), true
 
 	case "Comment.mainLevel":
 		if e.complexity.Comment.MainLevel == nil {
@@ -314,6 +324,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateMember(childComplexity, args["input"].(model.NewMember)), true
+
+	case "Mutation.deletePostComment":
+		if e.complexity.Mutation.DeletePostComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deletePostComment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeletePostComment(childComplexity, args["id"].(string), args["mainLevel"].(int), args["subLevel"].(int)), true
 
 	case "Mutation.loginCheck":
 		if e.complexity.Mutation.LoginCheck == nil {
@@ -685,6 +707,7 @@ type Comment {
   mainLevel: Int!
   subLevel: Int!
   timestamp: Time!
+  deleted: Boolean!
 }
 
 input NewComment {
@@ -736,6 +759,7 @@ type Mutation {
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
   addPostComment(id: String!, newComment: NewComment!): Boolean! @auth
+  deletePostComment(id: String!, mainLevel: Int!, subLevel: Int!): Boolean! @auth
   resetPWD(password: String!): Boolean! @auth
   sendResetPWD(email: String!): Boolean!
   updateMemberIsAdmin(id: String!): Boolean! @admin
@@ -832,6 +856,39 @@ func (ec *executionContext) field_Mutation_createMember_args(ctx context.Context
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deletePostComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["mainLevel"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mainLevel"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["mainLevel"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["subLevel"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subLevel"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["subLevel"] = arg2
 	return args, nil
 }
 
@@ -1380,6 +1437,50 @@ func (ec *executionContext) fieldContext_Comment_timestamp(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Comment_deleted(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Comment_deleted(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Deleted, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Comment_deleted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2672,6 +2773,81 @@ func (ec *executionContext) fieldContext_Mutation_addPostComment(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_deletePostComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deletePostComment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeletePostComment(rctx, fc.Args["id"].(string), fc.Args["mainLevel"].(int), fc.Args["subLevel"].(int))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deletePostComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deletePostComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_resetPWD(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_resetPWD(ctx, field)
 	if err != nil {
@@ -3322,6 +3498,8 @@ func (ec *executionContext) fieldContext_Post_comments(ctx context.Context, fiel
 				return ec.fieldContext_Comment_subLevel(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_Comment_timestamp(ctx, field)
+			case "deleted":
+				return ec.fieldContext_Comment_deleted(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
 		},
@@ -6035,6 +6213,13 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "deleted":
+
+			out.Values[i] = ec._Comment_deleted(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6264,6 +6449,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addPostComment(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deletePostComment":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deletePostComment(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {

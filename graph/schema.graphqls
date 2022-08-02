@@ -51,6 +51,7 @@ type Comment {
   mainLevel: Int!
   subLevel: Int!
   timestamp: Time!
+  deleted: Boolean!
 }
 
 input NewComment {
@@ -102,6 +103,7 @@ type Mutation {
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
   addPostComment(id: String!, newComment: NewComment!): Boolean! @auth
+  deletePostComment(id: String!, mainLevel: Int!, subLevel: Int!): Boolean! @auth
   resetPWD(password: String!): Boolean! @auth
   sendResetPWD(email: String!): Boolean!
   updateMemberIsAdmin(id: String!): Boolean! @admin
