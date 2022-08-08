@@ -581,3 +581,23 @@ func (db *DB) UpdateMemberIsAdmin(id string) (bool, error) {
 	log.Info.Println("change admin")
 	return true, nil
 }
+
+func (db *DB) GetPostByTags(year int, semester int, tags []string) ([]*model.Post, error) {
+	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	log.Info.Println(bson.D{{Key: "$all", Value: tags}})
+	filter := bson.M{"year": year, "semester": semester, "tags": bson.D{{Key: "$all", Value: tags}}}
+	// opts := options.Find().SetSort(bson.D{{Key: "createTime", Value: 1}})
+	matchPost, err := postColl.Find(ctx, filter /*, opts*/)
+	if err != nil {
+		return nil, err
+	}
+	var posts []*model.Post
+	err = matchPost.All(ctx, &posts)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return posts, nil
+}
