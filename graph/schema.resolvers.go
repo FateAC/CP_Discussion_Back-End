@@ -88,7 +88,11 @@ func (r *mutationResolver) AddPostComment(ctx context.Context, id string, newCom
 
 // DeletePostComment is the resolver for the deletePostComment field.
 func (r *mutationResolver) DeletePostComment(ctx context.Context, id string, mainLevel int, subLevel int) (bool, error) {
-	return database.DBConnect.DeletePostComment(id, mainLevel, subLevel)
+	commenterID, ok := ctx.Value(string("UserID")).(string)
+	if !ok {
+		return false, errors.New("failed to get user id from ctx")
+	}
+	return database.DBConnect.DeletePostComment(id, commenterID, mainLevel, subLevel)
 }
 
 // ResetPwd is the resolver for the resetPWD field.

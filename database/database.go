@@ -492,8 +492,13 @@ func (db *DB) AddPostComment(id string, commmenterID string, newComment model.Ne
 	return true, nil
 }
 
-func (db *DB) DeletePostComment(id string, mainLevel int, subLevel int) (bool, error) {
+func (db *DB) DeletePostComment(id string, commmenterID string, mainLevel int, subLevel int) (bool, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	commenterID, err := primitive.ObjectIDFromHex(commmenterID)
 	if err != nil {
 		log.Warning.Print(err)
 		return false, err
@@ -501,12 +506,24 @@ func (db *DB) DeletePostComment(id string, mainLevel int, subLevel int) (bool, e
 	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	filter := bson.M{"_id": objectID, "comments.mainLevel": mainLevel, "comments.subLevel": subLevel}
-	update := bson.M{"$set": bson.M{
-		"comments.$[item].deleted": true,
-	},
+	filter := bson.M{
+		"_id": objectID,
+		"comments": bson.M{
+			"$elemMatch": bson.M{
+				"commenter": commenterID,
+				"mainLevel": mainLevel,
+				"subLevel":  subLevel,
+				"deleted":   false,
+			},
+		},
 	}
-	arrayFilter := bson.M{"item.mainLevel": mainLevel, "item.subLevel": subLevel}
+	update := bson.M{"$set": bson.M{"comments.$[item].deleted": true}}
+	arrayFilter := bson.M{
+		"item.commenter": commenterID,
+		"item.mainLevel": mainLevel,
+		"item.subLevel":  subLevel,
+		"item.deleted":   false,
+	}
 	opts := options.FindOneAndUpdate().SetArrayFilters(
 		options.ArrayFilters{
 			Filters: []interface{}{
