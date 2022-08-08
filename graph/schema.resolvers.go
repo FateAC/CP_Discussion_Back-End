@@ -77,6 +77,11 @@ func (r *mutationResolver) RemovePost(ctx context.Context, id string) (*model.Po
 	return database.DBConnect.DeletePost(id)
 }
 
+// UpdatePostFile is the resolver for the updatePostFile field.
+func (r *mutationResolver) UpdatePostFile(ctx context.Context, id string, file graphql.Upload) (bool, error) {
+	return database.DBConnect.UpdatePostFile(id, file)
+}
+
 // AddPostComment is the resolver for the addPostComment field.
 func (r *mutationResolver) AddPostComment(ctx context.Context, id string, newComment model.NewComment) (bool, error) {
 	commenterID, ok := ctx.Value(string("UserID")).(string)

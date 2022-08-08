@@ -102,6 +102,7 @@ type Mutation {
   updateMemberNickname(nickname: String!): Boolean! @auth
   addPost(input: NewPost!): Post!
   removePost(id: String!): Post!
+  updatePostFile(id: String!, file: Upload!): Boolean! @admin
   addPostComment(id: String!, newComment: NewComment!): Boolean! @auth
   deletePostComment(id: String!, mainLevel: Int!, subLevel: Int!): Boolean! @auth
   resetPWD(password: String!): Boolean! @auth

@@ -417,6 +417,38 @@ func (db *DB) DeletePost(id string) (*model.Post, error) {
 	return &post, nil
 }
 
+func (db *DB) UpdatePostFile(id string, file graphql.Upload) (bool, error) {
+	post, err := db.FindPostById(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	filename := id + ".md"
+	mdPath := fileManager.BuildPostPath(post.Year, post.Semester, filename)
+	err = fileManager.SaveFile(mdPath, file.File)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	log.Debug.Printf("update markdown: %s\n", mdPath)
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$set": bson.M{"lastModifyTime": time.Now()}}
+	err = postColl.FindOneAndUpdate(ctx, filter, update).Err()
+	if err != nil {
+		log.Warning.Print(err)
+		return false, err
+	}
+	return true, nil
+}
+
 func (db *DB) FindPostById(id string) (*model.Post, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
