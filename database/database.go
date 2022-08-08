@@ -588,8 +588,8 @@ func (db *DB) GetPostByTags(year int, semester int, tags []string) ([]*model.Pos
 	defer cancel()
 	log.Info.Println(bson.D{{Key: "$all", Value: tags}})
 	filter := bson.M{"year": year, "semester": semester, "tags": bson.D{{Key: "$all", Value: tags}}}
-	// opts := options.Find().SetSort(bson.D{{Key: "createTime", Value: 1}})
-	matchPost, err := postColl.Find(ctx, filter /*, opts*/)
+	opts := options.Find().SetSort(bson.D{{Key: "createTime", Value: 1}})
+	matchPost, err := postColl.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
