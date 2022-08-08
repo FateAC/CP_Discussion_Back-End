@@ -82,6 +82,7 @@ type ComplexityRoot struct {
 		AddPostComment       func(childComplexity int, id string, newComment model.NewComment) int
 		CreateMember         func(childComplexity int, input model.NewMember) int
 		DeletePostComment    func(childComplexity int, id string, mainLevel int, subLevel int) int
+		GetPostByTags        func(childComplexity int, year int, semester int, tags []string) int
 		LoginCheck           func(childComplexity int, input model.Login) int
 		RemoveMember         func(childComplexity int, id string) int
 		RemoveMemberAvatar   func(childComplexity int, id string) int
@@ -133,6 +134,7 @@ type MutationResolver interface {
 	ResetPwd(ctx context.Context, password string) (bool, error)
 	SendResetPwd(ctx context.Context, email string) (bool, error)
 	UpdateMemberIsAdmin(ctx context.Context, id string) (bool, error)
+	GetPostByTags(ctx context.Context, year int, semester int, tags []string) ([]*model.Post, error)
 }
 type QueryResolver interface {
 	SelfInfo(ctx context.Context) (*model.Member, error)
@@ -336,6 +338,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeletePostComment(childComplexity, args["id"].(string), args["mainLevel"].(int), args["subLevel"].(int)), true
+
+	case "Mutation.getPostByTags":
+		if e.complexity.Mutation.GetPostByTags == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_getPostByTags_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.GetPostByTags(childComplexity, args["year"].(int), args["semester"].(int), args["tags"].([]string)), true
 
 	case "Mutation.loginCheck":
 		if e.complexity.Mutation.LoginCheck == nil {
@@ -763,6 +777,7 @@ type Mutation {
   resetPWD(password: String!): Boolean! @auth
   sendResetPWD(email: String!): Boolean!
   updateMemberIsAdmin(id: String!): Boolean! @admin
+  getPostByTags(year: Int!, semester: Int!, tags: [String!]!): [Post!]! @auth
 }
 
 type Query {
@@ -889,6 +904,39 @@ func (ec *executionContext) field_Mutation_deletePostComment_args(ctx context.Co
 		}
 	}
 	args["subLevel"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_getPostByTags_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["year"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["year"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["semester"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("semester"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["semester"] = arg1
+	var arg2 []string
+	if tmp, ok := rawArgs["tags"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+		arg2, err = ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["tags"] = arg2
 	return args, nil
 }
 
@@ -3047,6 +3095,103 @@ func (ec *executionContext) fieldContext_Mutation_updateMemberIsAdmin(ctx contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateMemberIsAdmin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_getPostByTags(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_getPostByTags(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().GetPostByTags(rctx, fc.Args["year"].(int), fc.Args["semester"].(int), fc.Args["tags"].([]string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*model.Post); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*CP_Discussion/graph/model.Post`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Post)
+	fc.Result = res
+	return ec.marshalNPost2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐPostᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_getPostByTags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "_id":
+				return ec.fieldContext_Post__id(ctx, field)
+			case "poster":
+				return ec.fieldContext_Post_poster(ctx, field)
+			case "title":
+				return ec.fieldContext_Post_title(ctx, field)
+			case "year":
+				return ec.fieldContext_Post_year(ctx, field)
+			case "semester":
+				return ec.fieldContext_Post_semester(ctx, field)
+			case "tags":
+				return ec.fieldContext_Post_tags(ctx, field)
+			case "mdPath":
+				return ec.fieldContext_Post_mdPath(ctx, field)
+			case "createTime":
+				return ec.fieldContext_Post_createTime(ctx, field)
+			case "lastModifyTime":
+				return ec.fieldContext_Post_lastModifyTime(ctx, field)
+			case "comments":
+				return ec.fieldContext_Post_comments(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_getPostByTags_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -6485,6 +6630,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateMemberIsAdmin(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "getPostByTags":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_getPostByTags(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {

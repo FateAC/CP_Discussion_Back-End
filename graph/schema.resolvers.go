@@ -154,6 +154,11 @@ func (r *mutationResolver) UpdateMemberIsAdmin(ctx context.Context, id string) (
 	return database.DBConnect.UpdateMemberIsAdmin(id)
 }
 
+// GetPostByTags is the resolver for the getPostByTags field.
+func (r *mutationResolver) GetPostByTags(ctx context.Context, year int, semester int, tags []string) ([]*model.Post, error) {
+	return database.DBConnect.GetPostByTags(year, semester, tags)
+}
+
 // SelfInfo is the resolver for the selfInfo field.
 func (r *queryResolver) SelfInfo(ctx context.Context) (*model.Member, error) {
 	id, ok := ctx.Value(string("UserID")).(string)
