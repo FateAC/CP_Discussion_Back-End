@@ -6,6 +6,7 @@ import (
 	"CP_Discussion/file/fileManager"
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
+	"CP_Discussion/timeformat"
 	"context"
 	"fmt"
 	"net/url"
@@ -390,6 +391,7 @@ func (db *DB) InsertPost(input model.NewPost) (*model.Post, error) {
 		log.Warning.Print(err)
 		return nil, err
 	}
+	formatPostTime(&post)
 	return &post, nil
 }
 
@@ -414,6 +416,7 @@ func (db *DB) DeletePost(id string) (*model.Post, error) {
 		return nil, err
 	}
 	_ = os.Remove(filepath.Join("data", mdUrl.Path))
+	formatPostTime(&post)
 	return &post, nil
 }
 
@@ -464,6 +467,7 @@ func (db *DB) FindPostById(id string) (*model.Post, error) {
 		log.Warning.Print(err)
 		return nil, err
 	}
+	formatPostTime(&post)
 	return &post, nil
 }
 
@@ -482,7 +486,18 @@ func (db *DB) AllPost() ([]*model.Post, error) {
 		log.Warning.Print(err)
 		return nil, err
 	}
+	for _, post := range posts {
+		formatPostTime(post)
+	}
 	return posts, nil
+}
+
+func formatPostTime(post *model.Post) {
+	timeformat.FormatTime(&post.CreateTime)
+	timeformat.FormatTime(&post.LastModifyTime)
+	for _, comment := range post.Comments {
+		timeformat.FormatTime(&comment.Timestamp)
+	}
 }
 
 func (db *DB) AddPostComment(id string, commmenterID string, newComment model.NewComment) (bool, error) {
