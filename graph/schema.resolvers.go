@@ -214,21 +214,14 @@ func (r *queryResolver) GetPostsByTags(ctx context.Context, year int, semester i
 	if memberCourse == nil {
 		return nil, fmt.Errorf("memberCourseEmpty")
 	}
+	searchStr := []string{
+		strconv.Itoa(year+1911) + "_Fall",
+		strconv.Itoa(year+1911+1) + "_Spring",
+	}[semester]
 	for _, course := range memberCourse {
-		tmp := strings.Split(course.Name, "_")
-		y, _ := strconv.Atoi(tmp[0])
-		y -= 1911
-		var s int
-		if tmp[1] == "Spring" {
-			s = 0
-		} else if tmp[1] == "Fall" {
-			s = 1
-			year -= 1
+		if course.Name == searchStr {
+			return database.DBConnect.GetPostsByTags(year, semester, tags)
 		}
-		if y != year || s != semester {
-			continue
-		}
-		return database.DBConnect.GetPostsByTags(year, semester, tags)
 	}
 	log.Error.Println("memberHasNoMatchedPost")
 	return nil, fmt.Errorf("memberHasNoMatchedPost")
