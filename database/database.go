@@ -646,7 +646,7 @@ func (db *DB) UpdateMemberIsAdmin(id string) (bool, error) {
 	return true, nil
 }
 
-func (db *DB) GetPostByTags(year int, semester int, tags []string) ([]*model.Post, error) {
+func (db *DB) GetPostsByTags(year int, semester int, tags []string) ([]*model.Post, error) {
 	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

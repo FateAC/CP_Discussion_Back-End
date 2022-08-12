@@ -108,7 +108,6 @@ type Mutation {
   resetPWD(password: String!): Boolean! @auth
   sendResetPWD(email: String!): Boolean!
   updateMemberIsAdmin(id: String!): Boolean! @admin
-  getPostByTags(year: Int!, semester: Int!, tags: [String!]!): [Post!]! @auth
 }
 
 type Query {
@@ -118,4 +117,5 @@ type Query {
   isAdmin: Boolean! @auth
   post(id: String!): Post!
   posts: [Post!]!
+  getPostsByTags(year: Int!, semester: Int! ,tags: [String!]!): [Post!]! @auth
 }

@@ -6,6 +6,7 @@ package graph
 import (
 	"CP_Discussion/auth"
 	"CP_Discussion/database"
+	"CP_Discussion/directive"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
@@ -13,6 +14,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -159,11 +161,6 @@ func (r *mutationResolver) UpdateMemberIsAdmin(ctx context.Context, id string) (
 	return database.DBConnect.UpdateMemberIsAdmin(id)
 }
 
-// GetPostByTags is the resolver for the getPostByTags field.
-func (r *mutationResolver) GetPostByTags(ctx context.Context, year int, semester int, tags []string) ([]*model.Post, error) {
-	return database.DBConnect.GetPostByTags(year, semester, tags)
-}
-
 // SelfInfo is the resolver for the selfInfo field.
 func (r *queryResolver) SelfInfo(ctx context.Context) (*model.Member, error) {
 	id, ok := ctx.Value(string("UserID")).(string)
@@ -200,6 +197,41 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error
 // Posts is the resolver for the posts field.
 func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
 	return database.DBConnect.AllPost()
+}
+
+// GetPostsByTags is the resolver for the getPostsByTags field.
+func (r *queryResolver) GetPostsByTags(ctx context.Context, year int, semester int, tags []string) ([]*model.Post, error) {
+	claim, err := directive.ParseContextClaims(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userID := claim.UserID
+	member, err := database.DBConnect.FindMemberById(userID)
+	if err != nil {
+		return nil, err
+	}
+	memberCourse := member.Courses
+	if memberCourse == nil {
+		return nil, fmt.Errorf("memberCourseEmpty")
+	}
+	for _, course := range memberCourse {
+		tmp := strings.Split(course.Name, "_")
+		y, _ := strconv.Atoi(tmp[0])
+		y -= 1911
+		var s int
+		if tmp[1] == "Spring" {
+			s = 0
+		} else if tmp[1] == "Fall" {
+			s = 1
+			year -= 1
+		}
+		if y != year || s != semester {
+			continue
+		}
+		return database.DBConnect.GetPostsByTags(year, semester, tags)
+	}
+	log.Error.Println("memberHasNoMatchedPost")
+	return nil, fmt.Errorf("memberHasNoMatchedPost")
 }
 
 // Mutation returns generated.MutationResolver implementation.

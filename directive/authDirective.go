@@ -11,7 +11,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
-func parseContextClaims(ctx context.Context) (*auth.Claims, error) {
+func ParseContextClaims(ctx context.Context) (*auth.Claims, error) {
 	token, ok := ctx.Value("token").(string)
 	log.Debug.Println(token)
 	if !ok || token == "" {
@@ -27,7 +27,7 @@ func parseContextClaims(ctx context.Context) (*auth.Claims, error) {
 }
 
 func AuthDirective(ctx context.Context, _ interface{}, next graphql.Resolver) (interface{}, error) {
-	claims, err := parseContextClaims(ctx)
+	claims, err := ParseContextClaims(ctx)
 	if err != nil {
 		return nil, &gqlerror.Error{
 			Message: "Access Denied: " + err.Error(),
@@ -38,7 +38,7 @@ func AuthDirective(ctx context.Context, _ interface{}, next graphql.Resolver) (i
 }
 
 func AdminDirective(ctx context.Context, _ interface{}, next graphql.Resolver) (interface{}, error) {
-	claims, err := parseContextClaims(ctx)
+	claims, err := ParseContextClaims(ctx)
 	if err != nil {
 		return nil, &gqlerror.Error{
 			Message: "Access Denied: " + err.Error(),
