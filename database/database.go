@@ -529,13 +529,24 @@ func (db *DB) AddPostComment(id string, commmenterID string, newComment model.Ne
 		Timestamp: time.Now(),
 		Deleted:   false,
 	}
-	filter := bson.M{"_id": objectID}
-	update := bson.M{"$push": bson.M{"comments": comment}}
-	err = postColl.FindOneAndUpdate(ctx, filter, update).Err()
-	if err != nil {
-		log.Warning.Print(err)
-		return false, err
+	update := bson.M{
+		"$push": bson.M{
+			"comments": bson.M{
+				"$each": bson.A{
+					comment,
+				},
+				"$sort": bson.D{
+					{Key: "mainLevel", Value: 1},
+					{Key: "subLevel", Value: 1},
+				},
+			},
+		},
 	}
+	postColl.UpdateByID(
+		ctx,
+		objectID,
+		update,
+	)
 	return true, nil
 }
 
