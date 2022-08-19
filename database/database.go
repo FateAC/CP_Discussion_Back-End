@@ -676,3 +676,147 @@ func (db *DB) GetPostsByTags(year int, semester int, tags []string) ([]*model.Po
 	}
 	return posts, nil
 }
+
+func (db *DB) AllCourses() ([]*model.Course, error) {
+	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	cursor, err := postColl.Aggregate(ctx, mongo.Pipeline{
+		bson.D{
+			{
+				Key: "$group",
+				Value: bson.D{
+					{
+						Key:   "_id",
+						Value: "",
+					},
+					{
+						Key: "courses",
+						Value: bson.D{
+							{
+								Key: "$addToSet",
+								Value: bson.D{
+									{
+										Key:   "year",
+										Value: "$year",
+									},
+									{
+										Key:   "semester",
+										Value: "$semester",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		bson.D{
+			{
+				Key: "$unwind",
+				Value: bson.D{
+					{
+						Key:   "path",
+						Value: "$courses",
+					},
+				},
+			},
+		},
+		bson.D{
+			{
+				Key: "$project",
+				Value: bson.D{
+					{
+						Key:   "year",
+						Value: "$courses.year",
+					},
+					{
+						Key:   "semester",
+						Value: "$courses.semester",
+					},
+				},
+			},
+		},
+		bson.D{
+			{
+				Key: "$sort",
+				Value: bson.D{
+					{
+						Key:   "year",
+						Value: 1,
+					},
+					{
+						Key:   "semester",
+						Value: 1,
+					},
+				},
+			},
+		},
+		bson.D{
+			{
+				Key: "$project",
+				Value: bson.D{
+					{
+						Key:   "_id",
+						Value: 0,
+					},
+					{
+						Key: "name",
+						Value: bson.D{
+							{
+								Key: "$concat",
+								Value: bson.A{
+									bson.D{
+										{
+											Key: "$toString",
+											Value: bson.D{
+												{
+													Key: "$add",
+													Value: bson.A{
+														"$year",
+														1911,
+														"$semester",
+													},
+												},
+											},
+										},
+									},
+									"_",
+									bson.D{
+										{
+											Key: "$cond",
+											Value: bson.A{
+												bson.D{
+													{
+														Key: "$eq",
+														Value: bson.A{
+															"$semester",
+															0,
+														},
+													},
+												},
+												"Fall",
+												"Spring",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	var courses []*model.Course
+	err = cursor.All(ctx, &courses)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return courses, nil
+}

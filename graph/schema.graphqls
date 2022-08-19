@@ -118,4 +118,5 @@ type Query {
   post(id: String!): Post!
   posts: [Post!]!
   getPostsByTags(year: Int!, semester: Int! ,tags: [String!]!): [Post!]! @auth
+  courses: [Course!]! @admin
 }

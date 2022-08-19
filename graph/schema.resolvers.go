@@ -225,6 +225,11 @@ func (r *queryResolver) GetPostsByTags(ctx context.Context, year int, semester i
 	return nil, fmt.Errorf("memberHasNoMatchedPost")
 }
 
+// Courses is the resolver for the courses field.
+func (r *queryResolver) Courses(ctx context.Context) ([]*model.Course, error) {
+	return database.DBConnect.AllCourses()
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
