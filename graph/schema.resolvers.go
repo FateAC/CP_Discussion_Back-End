@@ -6,7 +6,6 @@ package graph
 import (
 	"CP_Discussion/auth"
 	"CP_Discussion/database"
-	"CP_Discussion/directive"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/graph/model"
 	"CP_Discussion/log"
@@ -201,11 +200,10 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
 
 // GetPostsByTags is the resolver for the getPostsByTags field.
 func (r *queryResolver) GetPostsByTags(ctx context.Context, year int, semester int, tags []string) ([]*model.Post, error) {
-	claim, err := directive.ParseContextClaims(ctx)
-	if err != nil {
-		return nil, err
+	userID, ok := ctx.Value(string("UserID")).(string)
+	if !ok {
+		return nil, errors.New("failed to get user id from ctx")
 	}
-	userID := claim.UserID
 	member, err := database.DBConnect.FindMemberById(userID)
 	if err != nil {
 		return nil, err

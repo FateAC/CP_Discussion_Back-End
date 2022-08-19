@@ -3,12 +3,12 @@ package main
 import (
 	"os"
 
+	"CP_Discussion/auth"
 	"CP_Discussion/directive"
 	"CP_Discussion/file/fileHandler"
 	"CP_Discussion/graph"
 	"CP_Discussion/graph/generated"
 	"CP_Discussion/log"
-	"CP_Discussion/middleware"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -48,11 +48,12 @@ func main() {
 
 	router := gin.Default()
 	router.SetTrustedProxies([]string{"localhost"})
-	router.Use(middleware.AuthMiddleware())
-	router.GET("/", playgroundHandler())
-	router.POST("/query", graphqlHandler())
+	router.Use(auth.CorsMiddleware())
+	router.GET("/", auth.AuthMiddleware(), playgroundHandler())
+	router.POST("/query", auth.AuthMiddleware(), graphqlHandler())
 	router.GET("/post/:year/:semester/:filename", fileHandler.FileHandler())
 	router.GET("/avatar/:filename", fileHandler.FileHandler())
+	router.POST("/refresh", auth.RefreshHandler())
 
 	log.Info.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Error.Fatal(router.Run(":" + port))
