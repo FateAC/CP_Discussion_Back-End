@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -678,10 +679,21 @@ func (db *DB) GetPostsByTags(year int, semester int, tags []string) ([]*model.Po
 }
 
 func (db *DB) AllCourses() ([]*model.Course, error) {
-	postColl := db.client.Database(env.DBInfo["DBName"]).Collection("post")
+	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	cursor, err := postColl.Aggregate(ctx, mongo.Pipeline{
+	cursor, err := memberColl.Aggregate(ctx, mongo.Pipeline{
+		bson.D{
+			{
+				Key: "$match",
+				Value: bson.D{
+					{
+						Key:   "isAdmin",
+						Value: true,
+					},
+				},
+			},
+		},
 		bson.D{
 			{
 				Key: "$group",
@@ -694,15 +706,47 @@ func (db *DB) AllCourses() ([]*model.Course, error) {
 						Key: "courses",
 						Value: bson.D{
 							{
-								Key: "$addToSet",
+								Key:   "$push",
+								Value: "$courses",
+							},
+						},
+					},
+				},
+			},
+		},
+		bson.D{
+			{
+				Key: "$project",
+				Value: bson.D{
+					{
+						Key:   "_id",
+						Value: 0,
+					},
+					{
+						Key: "courses",
+						Value: bson.D{
+							{
+								Key: "$reduce",
 								Value: bson.D{
 									{
-										Key:   "year",
-										Value: "$year",
+										Key:   "input",
+										Value: "$courses",
 									},
 									{
-										Key:   "semester",
-										Value: "$semester",
+										Key:   "initialValue",
+										Value: bson.A{},
+									},
+									{
+										Key: "in",
+										Value: bson.D{
+											{
+												Key: "$setUnion",
+												Value: bson.A{
+													"$$value",
+													"$$this",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -727,82 +771,8 @@ func (db *DB) AllCourses() ([]*model.Course, error) {
 				Key: "$project",
 				Value: bson.D{
 					{
-						Key:   "year",
-						Value: "$courses.year",
-					},
-					{
-						Key:   "semester",
-						Value: "$courses.semester",
-					},
-				},
-			},
-		},
-		bson.D{
-			{
-				Key: "$sort",
-				Value: bson.D{
-					{
-						Key:   "year",
-						Value: 1,
-					},
-					{
-						Key:   "semester",
-						Value: 1,
-					},
-				},
-			},
-		},
-		bson.D{
-			{
-				Key: "$project",
-				Value: bson.D{
-					{
-						Key:   "_id",
-						Value: 0,
-					},
-					{
-						Key: "name",
-						Value: bson.D{
-							{
-								Key: "$concat",
-								Value: bson.A{
-									bson.D{
-										{
-											Key: "$toString",
-											Value: bson.D{
-												{
-													Key: "$add",
-													Value: bson.A{
-														"$year",
-														1911,
-														"$semester",
-													},
-												},
-											},
-										},
-									},
-									"_",
-									bson.D{
-										{
-											Key: "$cond",
-											Value: bson.A{
-												bson.D{
-													{
-														Key: "$eq",
-														Value: bson.A{
-															"$semester",
-															0,
-														},
-													},
-												},
-												"Fall",
-												"Spring",
-											},
-										},
-									},
-								},
-							},
-						},
+						Key:   "name",
+						Value: "$courses.name",
 					},
 				},
 			},
@@ -818,5 +788,26 @@ func (db *DB) AllCourses() ([]*model.Course, error) {
 		log.Warning.Print(err)
 		return nil, err
 	}
+	sort.Slice(
+		courses,
+		func(i, j int) bool {
+			parse := func(course *model.Course) (string, string) {
+				parts := strings.Split(course.Name, "_")
+				year := parts[0]
+				semester := parts[1]
+				return year, semester
+			}
+			years := [2]string{}
+			semesters := [2]string{}
+			years[0], semesters[0] = parse(courses[i])
+			years[1], semesters[1] = parse(courses[j])
+			if years[0] != years[1] {
+				return years[0] < years[1]
+			} else if semesters[0] != semesters[1] {
+				return semesters[0] > semesters[1]
+			}
+			return false
+		},
+	)
 	return courses, nil
 }
