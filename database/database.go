@@ -682,72 +682,42 @@ func (db *DB) AllCourses() ([]*model.Course, error) {
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	cursor, err := memberColl.Aggregate(ctx, mongo.Pipeline{
-		bson.D{
-			{
-				Key: "$match",
-				Value: bson.D{
-					{
-						Key:   "isAdmin",
-						Value: true,
+	cursor, err := memberColl.Aggregate(ctx, bson.A{
+		bson.M{
+			"$match": bson.M{
+				"isAdmin": true,
+			},
+		},
+		bson.M{
+			"$group": bson.D{
+				{
+					Key:   "_id",
+					Value: "",
+				},
+				{
+					Key: "courses",
+					Value: bson.M{
+						"$push": "$courses",
 					},
 				},
 			},
 		},
-		bson.D{
-			{
-				Key: "$group",
-				Value: bson.D{
-					{
-						Key:   "_id",
-						Value: "",
-					},
-					{
-						Key: "courses",
-						Value: bson.D{
-							{
-								Key:   "$push",
-								Value: "$courses",
-							},
-						},
-					},
+		bson.M{
+			"$project": bson.D{
+				{
+					Key:   "_id",
+					Value: 0,
 				},
-			},
-		},
-		bson.D{
-			{
-				Key: "$project",
-				Value: bson.D{
-					{
-						Key:   "_id",
-						Value: 0,
-					},
-					{
-						Key: "courses",
-						Value: bson.D{
-							{
-								Key: "$reduce",
-								Value: bson.D{
-									{
-										Key:   "input",
-										Value: "$courses",
-									},
-									{
-										Key:   "initialValue",
-										Value: bson.A{},
-									},
-									{
-										Key: "in",
-										Value: bson.D{
-											{
-												Key: "$setUnion",
-												Value: bson.A{
-													"$$value",
-													"$$this",
-												},
-											},
-										},
-									},
+				{
+					Key: "courses",
+					Value: bson.M{
+						"$reduce": bson.M{
+							"input":        "$courses",
+							"initialValue": bson.A{},
+							"in": bson.M{
+								"$setUnion": bson.A{
+									"$$value",
+									"$$this",
 								},
 							},
 						},
@@ -755,26 +725,14 @@ func (db *DB) AllCourses() ([]*model.Course, error) {
 				},
 			},
 		},
-		bson.D{
-			{
-				Key: "$unwind",
-				Value: bson.D{
-					{
-						Key:   "path",
-						Value: "$courses",
-					},
-				},
+		bson.M{
+			"$unwind": bson.M{
+				"path": "$courses",
 			},
 		},
-		bson.D{
-			{
-				Key: "$project",
-				Value: bson.D{
-					{
-						Key:   "name",
-						Value: "$courses.name",
-					},
-				},
+		bson.M{
+			"$project": bson.M{
+				"name": "$courses.name",
 			},
 		},
 	})
@@ -803,10 +761,9 @@ func (db *DB) AllCourses() ([]*model.Course, error) {
 			years[1], semesters[1] = parse(courses[j])
 			if years[0] != years[1] {
 				return years[0] < years[1]
-			} else if semesters[0] != semesters[1] {
+			} else {
 				return semesters[0] > semesters[1]
 			}
-			return false
 		},
 	)
 	return courses, nil
