@@ -12,13 +12,10 @@ import (
 
 func RefreshHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		refresh_token := c.PostForm("refresh_token")
-		if refresh_token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "no token provided"})
-			return
-		}
-		claims, err := ParseToken(refresh_token)
+		ctx := c.Request.Context()
+		claims, err := ParseContextClaims(ctx)
 		if err != nil {
+			log.Debug.Print(err.Error())
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
@@ -26,6 +23,7 @@ func RefreshHandler() gin.HandlerFunc {
 		access_token, err := CreateToken(time.Now(), time.Now(), time.Now().Add(time.Hour), userID)
 		if err != nil {
 			err = errors.Wrap(err, "create access token failed")
+			log.Debug.Print(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
