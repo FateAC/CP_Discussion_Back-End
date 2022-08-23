@@ -35,14 +35,14 @@ func (r *mutationResolver) LoginCheck(ctx context.Context, input model.Login) (*
 	return database.DBConnect.LoginCheck(input), nil
 }
 
-// AddMemberCourse is the resolver for the addMemberCourse field.
-func (r *mutationResolver) AddMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error) {
-	return database.DBConnect.AddMemberCourse(id, course)
+// AddMemberCourses is the resolver for the addMemberCourses field.
+func (r *mutationResolver) AddMemberCourses(ctx context.Context, id string, courses []*model.NewCourse) (*model.Member, error) {
+	return database.DBConnect.AddMemberCourse(id, courses)
 }
 
-// RemoveMemberCourse is the resolver for the removeMemberCourse field.
-func (r *mutationResolver) RemoveMemberCourse(ctx context.Context, id string, course model.NewCourse) (*model.Member, error) {
-	return database.DBConnect.RemoveMemberCourse(id, course)
+// RemoveMemberCourses is the resolver for the removeMemberCourses field.
+func (r *mutationResolver) RemoveMemberCourses(ctx context.Context, id string, courses []*model.NewCourse) (*model.Member, error) {
+	return database.DBConnect.RemoveMemberCourse(id, courses)
 }
 
 // UpdateMemberAvatar is the resolver for the updateMemberAvatar field.

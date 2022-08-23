@@ -213,7 +213,7 @@ func parseCourses(courses []*model.NewCourse) []*model.Course {
 	return res
 }
 
-func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
+func (db *DB) AddMemberCourse(id string, courses []*model.NewCourse) (*model.Member, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
@@ -222,9 +222,14 @@ func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, 
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	course := parseCourse(&input)
 	filter := bson.M{"_id": objectID}
-	update := bson.M{"$addToSet": bson.M{"courses": course}}
+	update := bson.M{
+		"$addToSet": bson.M{
+			"courses": bson.M{
+				"$each": parseCourses(courses),
+			},
+		},
+	}
 	after := options.After
 	opts := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
@@ -238,7 +243,7 @@ func (db *DB) AddMemberCourse(id string, input model.NewCourse) (*model.Member, 
 	return &member, nil
 }
 
-func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Member, error) {
+func (db *DB) RemoveMemberCourse(id string, courses []*model.NewCourse) (*model.Member, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
@@ -247,9 +252,14 @@ func (db *DB) RemoveMemberCourse(id string, input model.NewCourse) (*model.Membe
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	course := parseCourse(&input)
 	filter := bson.M{"_id": objectID}
-	update := bson.M{"$pull": bson.M{"courses": course}}
+	update := bson.M{
+		"$pull": bson.M{
+			"courses": bson.M{
+				"$in": parseCourses(courses),
+			},
+		},
+	}
 	after := options.After
 	opts := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
