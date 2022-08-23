@@ -6,9 +6,12 @@ RUN apk update && apk upgrade && \
 RUN mkdir -p /app
 WORKDIR /app
 
-COPY . .
+COPY go.mod .
+COPY go.sum .
 
 RUN go mod download
+
+COPY . .
 
 RUN go env -w GOFLAGS=-buildvcs=false
 
