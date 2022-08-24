@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	mapset "github.com/deckarep/golang-set"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -206,14 +207,14 @@ func parseCourse(course *model.NewCourse) *model.Course {
 }
 
 func parseCourses(courses []*model.NewCourse) []*model.Course {
-	var res []*model.Course
+	var res = make([]*model.Course, 0)
 	for _, course := range courses {
 		res = append(res, parseCourse(course))
 	}
 	return res
 }
 
-func (db *DB) AddMemberCourse(id string, courses []*model.NewCourse) (*model.Member, error) {
+func (db *DB) UpdateMemberCourse(id string, add []*model.NewCourse, remove []*model.NewCourse) ([]*model.Course, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Warning.Print(err)
@@ -222,55 +223,43 @@ func (db *DB) AddMemberCourse(id string, courses []*model.NewCourse) (*model.Mem
 	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+	s1, s2 := mapset.NewSet(), mapset.NewSet()
+	for _, course := range add {
+		s1.Add(*course)
+	}
+	for _, course := range remove {
+		s2.Add(*course)
+	}
 	filter := bson.M{"_id": objectID}
-	update := bson.M{
+	updateAdd := bson.M{
 		"$addToSet": bson.M{
 			"courses": bson.M{
-				"$each": parseCourses(courses),
+				"$each": s1.Difference(s2).ToSlice(),
 			},
 		},
 	}
-	after := options.After
-	opts := options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
-	}
-	member := model.Member{}
-	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
-	if err != nil {
-		log.Warning.Print(err)
-		return nil, err
-	}
-	return &member, nil
-}
-
-func (db *DB) RemoveMemberCourse(id string, courses []*model.NewCourse) (*model.Member, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Warning.Print(err)
-		return nil, err
-	}
-	memberColl := db.client.Database(env.DBInfo["DBName"]).Collection("member")
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	filter := bson.M{"_id": objectID}
-	update := bson.M{
+	updateRemove := bson.M{
 		"$pull": bson.M{
 			"courses": bson.M{
-				"$in": parseCourses(courses),
+				"$in": s2.Difference(s1).ToSlice(),
 			},
 		},
 	}
-	after := options.After
-	opts := options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
+	models := []mongo.WriteModel{
+		mongo.NewUpdateOneModel().SetFilter(filter).SetUpdate(updateAdd),
+		mongo.NewUpdateOneModel().SetFilter(filter).SetUpdate(updateRemove),
 	}
-	member := model.Member{}
-	err = memberColl.FindOneAndUpdate(ctx, filter, update, &opts).Decode(&member)
+	_, err = memberColl.BulkWrite(ctx, models)
 	if err != nil {
 		log.Warning.Print(err)
 		return nil, err
 	}
-	return &member, nil
+	member, err := db.FindMemberById(id)
+	if err != nil {
+		log.Warning.Print(err)
+		return nil, err
+	}
+	return member.Courses, nil
 }
 
 func (db *DB) UpdateMemberAvatar(id string, avatar graphql.Upload) (bool, error) {

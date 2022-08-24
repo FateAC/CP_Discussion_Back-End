@@ -77,7 +77,6 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddMemberCourses     func(childComplexity int, id string, courses []*model.NewCourse) int
 		AddPost              func(childComplexity int, input model.NewPost) int
 		AddPostComment       func(childComplexity int, id string, newComment model.NewComment) int
 		CreateMember         func(childComplexity int, input model.NewMember) int
@@ -85,11 +84,11 @@ type ComplexityRoot struct {
 		LoginCheck           func(childComplexity int, input model.Login) int
 		RemoveMember         func(childComplexity int, id string) int
 		RemoveMemberAvatar   func(childComplexity int, id string) int
-		RemoveMemberCourses  func(childComplexity int, id string, courses []*model.NewCourse) int
 		RemovePost           func(childComplexity int, id string) int
 		ResetPwd             func(childComplexity int, password string) int
 		SendResetPwd         func(childComplexity int, email string) int
 		UpdateMemberAvatar   func(childComplexity int, avatar graphql.Upload) int
+		UpdateMemberCourses  func(childComplexity int, id string, add []*model.NewCourse, remove []*model.NewCourse) int
 		UpdateMemberIsAdmin  func(childComplexity int, id string) int
 		UpdateMemberNickname func(childComplexity int, nickname string) int
 		UpdatePostFile       func(childComplexity int, id string, file graphql.Upload) int
@@ -124,8 +123,7 @@ type MutationResolver interface {
 	CreateMember(ctx context.Context, input model.NewMember) (*model.Member, error)
 	RemoveMember(ctx context.Context, id string) (*model.Member, error)
 	LoginCheck(ctx context.Context, input model.Login) (*model.Auth, error)
-	AddMemberCourses(ctx context.Context, id string, courses []*model.NewCourse) (*model.Member, error)
-	RemoveMemberCourses(ctx context.Context, id string, courses []*model.NewCourse) (*model.Member, error)
+	UpdateMemberCourses(ctx context.Context, id string, add []*model.NewCourse, remove []*model.NewCourse) ([]*model.Course, error)
 	UpdateMemberAvatar(ctx context.Context, avatar graphql.Upload) (bool, error)
 	RemoveMemberAvatar(ctx context.Context, id string) (bool, error)
 	UpdateMemberNickname(ctx context.Context, nickname string) (bool, error)
@@ -283,18 +281,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Member.Username(childComplexity), true
 
-	case "Mutation.addMemberCourses":
-		if e.complexity.Mutation.AddMemberCourses == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_addMemberCourses_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AddMemberCourses(childComplexity, args["id"].(string), args["courses"].([]*model.NewCourse)), true
-
 	case "Mutation.addPost":
 		if e.complexity.Mutation.AddPost == nil {
 			break
@@ -379,18 +365,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RemoveMemberAvatar(childComplexity, args["id"].(string)), true
 
-	case "Mutation.removeMemberCourses":
-		if e.complexity.Mutation.RemoveMemberCourses == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_removeMemberCourses_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RemoveMemberCourses(childComplexity, args["id"].(string), args["courses"].([]*model.NewCourse)), true
-
 	case "Mutation.removePost":
 		if e.complexity.Mutation.RemovePost == nil {
 			break
@@ -438,6 +412,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateMemberAvatar(childComplexity, args["avatar"].(graphql.Upload)), true
+
+	case "Mutation.updateMemberCourses":
+		if e.complexity.Mutation.UpdateMemberCourses == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateMemberCourses_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateMemberCourses(childComplexity, args["id"].(string), args["add"].([]*model.NewCourse), args["remove"].([]*model.NewCourse)), true
 
 	case "Mutation.updateMemberIsAdmin":
 		if e.complexity.Mutation.UpdateMemberIsAdmin == nil {
@@ -788,8 +774,7 @@ type Mutation {
   createMember(input: NewMember!): Member! @admin
   removeMember(id: String!): Member! @admin
   loginCheck(input: Login!): Auth!
-  addMemberCourses(id: String!, courses: [NewCourse!]!): Member! @admin
-  removeMemberCourses(id: String!, courses: [NewCourse!]!): Member! @admin
+  updateMemberCourses(id: String!, add: [NewCourse!]!, remove: [NewCourse!]!): [Course!]! @admin
   updateMemberAvatar(avatar: Upload!): Boolean! @auth
   removeMemberAvatar(id: String!): Boolean! @auth
   updateMemberNickname(nickname: String!): Boolean! @auth
@@ -820,30 +805,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
-
-func (ec *executionContext) field_Mutation_addMemberCourses_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	var arg1 []*model.NewCourse
-	if tmp, ok := rawArgs["courses"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("courses"))
-		arg1, err = ec.unmarshalNNewCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐNewCourseᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["courses"] = arg1
-	return args, nil
-}
 
 func (ec *executionContext) field_Mutation_addPostComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -962,30 +923,6 @@ func (ec *executionContext) field_Mutation_removeMemberAvatar_args(ctx context.C
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_removeMemberCourses_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	var arg1 []*model.NewCourse
-	if tmp, ok := rawArgs["courses"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("courses"))
-		arg1, err = ec.unmarshalNNewCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐNewCourseᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["courses"] = arg1
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_removeMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1058,6 +995,39 @@ func (ec *executionContext) field_Mutation_updateMemberAvatar_args(ctx context.C
 		}
 	}
 	args["avatar"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateMemberCourses_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 []*model.NewCourse
+	if tmp, ok := rawArgs["add"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("add"))
+		arg1, err = ec.unmarshalNNewCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐNewCourseᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["add"] = arg1
+	var arg2 []*model.NewCourse
+	if tmp, ok := rawArgs["remove"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remove"))
+		arg2, err = ec.unmarshalNNewCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐNewCourseᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["remove"] = arg2
 	return args, nil
 }
 
@@ -2230,8 +2200,8 @@ func (ec *executionContext) fieldContext_Mutation_loginCheck(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_addMemberCourses(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_addMemberCourses(ctx, field)
+func (ec *executionContext) _Mutation_updateMemberCourses(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateMemberCourses(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2245,7 +2215,7 @@ func (ec *executionContext) _Mutation_addMemberCourses(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().AddMemberCourses(rctx, fc.Args["id"].(string), fc.Args["courses"].([]*model.NewCourse))
+			return ec.resolvers.Mutation().UpdateMemberCourses(rctx, fc.Args["id"].(string), fc.Args["add"].([]*model.NewCourse), fc.Args["remove"].([]*model.NewCourse))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Admin == nil {
@@ -2261,10 +2231,10 @@ func (ec *executionContext) _Mutation_addMemberCourses(ctx context.Context, fiel
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*model.Member); ok {
+		if data, ok := tmp.([]*model.Course); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *CP_Discussion/graph/model.Member`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*CP_Discussion/graph/model.Course`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2276,12 +2246,12 @@ func (ec *executionContext) _Mutation_addMemberCourses(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Member)
+	res := resTmp.([]*model.Course)
 	fc.Result = res
-	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
+	return ec.marshalNCourse2ᚕᚖCP_DiscussionᚋgraphᚋmodelᚐCourseᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_addMemberCourses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateMemberCourses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -2289,24 +2259,10 @@ func (ec *executionContext) fieldContext_Mutation_addMemberCourses(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "_id":
-				return ec.fieldContext_Member__id(ctx, field)
-			case "email":
-				return ec.fieldContext_Member_email(ctx, field)
-			case "password":
-				return ec.fieldContext_Member_password(ctx, field)
-			case "isAdmin":
-				return ec.fieldContext_Member_isAdmin(ctx, field)
-			case "username":
-				return ec.fieldContext_Member_username(ctx, field)
-			case "nickname":
-				return ec.fieldContext_Member_nickname(ctx, field)
-			case "avatarPath":
-				return ec.fieldContext_Member_avatarPath(ctx, field)
-			case "courses":
-				return ec.fieldContext_Member_courses(ctx, field)
+			case "name":
+				return ec.fieldContext_Course_name(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Course", field.Name)
 		},
 	}
 	defer func() {
@@ -2316,100 +2272,7 @@ func (ec *executionContext) fieldContext_Mutation_addMemberCourses(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addMemberCourses_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_removeMemberCourses(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_removeMemberCourses(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().RemoveMemberCourses(rctx, fc.Args["id"].(string), fc.Args["courses"].([]*model.NewCourse))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.Admin == nil {
-				return nil, errors.New("directive admin is not implemented")
-			}
-			return ec.directives.Admin(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.Member); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *CP_Discussion/graph/model.Member`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Member)
-	fc.Result = res
-	return ec.marshalNMember2ᚖCP_DiscussionᚋgraphᚋmodelᚐMember(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_removeMemberCourses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "_id":
-				return ec.fieldContext_Member__id(ctx, field)
-			case "email":
-				return ec.fieldContext_Member_email(ctx, field)
-			case "password":
-				return ec.fieldContext_Member_password(ctx, field)
-			case "isAdmin":
-				return ec.fieldContext_Member_isAdmin(ctx, field)
-			case "username":
-				return ec.fieldContext_Member_username(ctx, field)
-			case "nickname":
-				return ec.fieldContext_Member_nickname(ctx, field)
-			case "avatarPath":
-				return ec.fieldContext_Member_avatarPath(ctx, field)
-			case "courses":
-				return ec.fieldContext_Member_courses(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Member", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_removeMemberCourses_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateMemberCourses_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -6719,19 +6582,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "addMemberCourses":
+		case "updateMemberCourses":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addMemberCourses(ctx, field)
-			})
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "removeMemberCourses":
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_removeMemberCourses(ctx, field)
+				return ec._Mutation_updateMemberCourses(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
