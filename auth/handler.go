@@ -20,14 +20,28 @@ func RefreshHandler() gin.HandlerFunc {
 			return
 		}
 		userID := claims.UserID
-		access_token, err := CreateToken(time.Now(), time.Now(), time.Now().Add(time.Hour), userID)
+		refreshToken := ctx.Value("token").(string)
+		accessToken, err := CreateToken(time.Now(), time.Now(), time.Now().Add(time.Hour), userID)
 		if err != nil {
 			err = errors.Wrap(err, "create access token failed")
 			log.Debug.Print(err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Debug.Printf("create access token for userID %s: %s", userID, access_token)
-		c.JSON(http.StatusOK, gin.H{"access_token": access_token})
+		log.Debug.Printf("create access token for userID %s: %s", userID, accessToken)
+		if time.Now().Add(time.Duration(4) * time.Hour).After(claims.ExpiresAt.Time) {
+			refreshToken, err = CreateToken(time.Now(), time.Now(), time.Now().Add(time.Duration(24)*time.Hour), userID)
+			if err != nil {
+				err = errors.Wrap(err, "create refresh token failed")
+				log.Debug.Print(err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			log.Debug.Printf("create refresh token for userID %s: %s", userID, refreshToken)
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
+		})
 	}
 }
