@@ -20,7 +20,7 @@ func RefreshHandler() gin.HandlerFunc {
 			return
 		}
 		userID := claims.UserID
-		refreshToken := ctx.Value("token").(string)
+		refreshToken, err := ParseContextToken(ctx)
 		accessToken, err := CreateToken(time.Now(), time.Now(), time.Now().Add(time.Hour), userID)
 		if err != nil {
 			err = errors.Wrap(err, "create access token failed")

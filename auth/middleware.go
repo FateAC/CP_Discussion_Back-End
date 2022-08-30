@@ -34,14 +34,22 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func ParseContextClaims(ctx context.Context) (*Claims, error) {
+func ParseContextToken(ctx context.Context) (string, error) {
 	token, ok := ctx.Value("token").(string)
 	log.Debug.Println(token)
 	if !ok || token == "" || !strings.HasPrefix(token, "Bearer ") {
-		return nil, errors.New("no token provided")
+		return "", errors.New("no token provided")
 	}
 	bearer := "Bearer "
 	token = token[len(bearer):]
+	return token, nil
+}
+
+func ParseContextClaims(ctx context.Context) (*Claims, error) {
+	token, err := ParseContextToken(ctx)
+	if err != nil {
+		return nil, err
+	}
 	claims, err := ParseToken(token)
 	if err != nil {
 		return nil, err
